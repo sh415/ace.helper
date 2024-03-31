@@ -1,17 +1,26 @@
 {
   "name": "ace.helper",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "app.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sh415/ace.helper.git"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
+    "start": "electron .",
+    "deploy": "electron-builder build --win --publish always"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "electron": "^29.1.5",
+    "electron-updater": "^6.1.8",
     "puppeteer": "^22.6.0"
+  },
+  "devDependencies": {
+    "electron": "^29.1.5",
+    "electron-builder": "^23.3.3"
   }
 }

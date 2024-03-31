@@ -1,25 +1,42 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>My Electron App</title>
+    <title>My Electron App 1.0.1</title>
 </head>
 <body>
     <h1>Welcome to My Electron App!</h1>
     <button id="openGoogle">Open Google</button>
+
+    <!-- 자동 업데이트 관련 -->
+    <h1>hihi latest version update link update</h1>
+    Current version: <span id="version">vX.Y.Z</span>
+    <div id="messages"></div>
+
     <script>
         /* ipcRenderer 를 직접 노출하는 경우, 비활성화 권장 */
-        // const { ipcRenderer } = require('electron');
+        const { ipcRenderer } = require('electron');
 
-        // // 버튼에 클릭 이벤트 리스너 추가
-        // document.getElementById('openGoogle').addEventListener('click', () => {
-        //     // 메인 프로세스에 'open-google' 메시지 전송
-        //     ipcRenderer.send('open-google');
-        // });
+        document.getElementById('openGoogle').addEventListener('click', () => { // 버튼에 클릭 이벤트 리스너 추가
+            // 메인 프로세스에 'open-google' 메시지 전송
+            ipcRenderer.send('open-google');
+        });
 
         /* preload.js 를 통해  Electron API 안전하게 사용 */
-        document.getElementById('openGoogle').addEventListener('click', () => {
-            window.electronAPI.openGoogle();
+        // document.getElementById('openGoogle').addEventListener('click', () => {
+        //     window.electronAPI.openGoogle();
+        // });
+
+        /* 자동 업데이트 관련 */
+        let version = window.location.hash.substring(1);
+        document.getElementById('version').innerText = version;
+
+        ipcRenderer.on('message', function(event, text) {
+            var container = document.getElementById('messages');
+            var message = document.createElement('div');
+            message.innerHTML = text;
+            container.appendChild(message);
         });
+
     </script>
 </body>
 </html>
