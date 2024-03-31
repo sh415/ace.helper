@@ -21,7 +21,7 @@ function createWindow () {
     //         /* ipcRenderer 를 직접 노출하는 경우, 비활성화 권장 */
     //         // nodeIntegration: true,
     //         // contextIsolation: false,
-    //         preload: path.join(__dirname, 'preload.js')
+    //         preload: path.join(__dirname, 'preload.js'),
     //     }
     // });
 
@@ -29,13 +29,16 @@ function createWindow () {
 
     /** 자동 업데이트 적용 */
     updateWin = new BrowserWindow({
+        width: 1080,
+        height: 720,
         webPreferences: { 
           nodeIntegration: true,
           contextIsolation: false,
+          webviewTag:true,
         },
       });
     
-      updateWin.webContents.openDevTools();
+      // updateWin.webContents.openDevTools();
       updateWin.loadURL(`file://${__dirname}/index.html#v${app.getVersion()}`);
       return updateWin;
 }
@@ -100,6 +103,7 @@ app.on('window-all-closed', () => {
 
 /** 네이버 로그인 */
 ipcMain.on('open-google', async (event) => {
+    writeMessageToWindow('ipcMain!');
     const min = 100;
     const max = 500;
     let wait = 0;
