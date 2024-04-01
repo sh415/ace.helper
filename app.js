@@ -111,6 +111,7 @@ ipcMain.on('open-google', async (event) => {
     const browser = await puppeteer.launch({ 
         // headless: 'new',
         headless: false, // headless: false 로 설정하여 GUI 모드에서 브라우저를 실행
+        executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
         // args: [
         //     '--no-sandbox',
         //     '--disable-setuid-sandbox',

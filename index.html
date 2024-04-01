@@ -20,23 +20,20 @@
         const { ipcRenderer } = require('electron');
 
         document.getElementById('openGoogle').addEventListener('click', async () => { // 버튼에 클릭 이벤트 리스너 추가
-            // // 메인 프로세스에 'open-google' 메시지 전송
-            // console.log('!!');
-            // alert('!!');
-            
-            // try {
-            //     ipcRenderer.send('open-google');
+            // 메인 프로세스에 'open-google' 메시지 전송            
+            try {
+                ipcRenderer.send('open-google');
 
-            // } catch (error) {
-            //     console.log(error);
-            // }
+            } catch (error) {
+                console.log(error);
+            }
 
-            const webview = document.getElementById('webview');
-            webview.loadURL('https://www.naver.com/');
+            // const webview = document.getElementById('webview');
+            // webview.loadURL('https://www.naver.com/');
+            // await waitForTimeout(3000);
 
-            await waitForTimeout(3000);
-
-            webview.executeJavaScript('document.querySelector(`.MyView-module__link_login___HpHMW`).click()');
+            // webview.executeJavaScript('document.querySelector(`.MyView-module__link_login___HpHMW`).click()');
+            // await waitForTimeout(3000);
         });
 
         /* preload.js 를 통해  Electron API 안전하게 사용 */
