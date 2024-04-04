@@ -102,7 +102,7 @@ app.on('window-all-closed', () => {
 })
 
 /** 네이버 로그인 */
-ipcMain.on('open-google', async (event) => {
+ipcMain.on('run_program', async (event) => {
     writeMessageToWindow('ipcMain!');
     const min = 100;
     const max = 500;

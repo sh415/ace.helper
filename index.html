@@ -1,28 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>My Electron App 1.0.1</title>
+    <title>경매올리고 자동 프로그램 (ace.helper v1.0.3)</title>
 </head>
 <body>
 
-    <webview id="webview" src="http://www.google.com/" style="width:1280; height:720"></webview>
-
-    <h1>Welcome to My Electron App!</h1>
-    <button id="openGoogle">Test</button>
+    <!-- <webview id="webview" src="http://www.google.com/" style="width:1280; height:720"></webview> -->
 
     <!-- 자동 업데이트 관련 -->
-    <h1>Latest version update link update</h1>
-    Current version: <span id="version">vX.Y.Z</span>
+    <h1>Latest version update.</h1>
+    <div class="flex-container">
+        <div >현재 버전 :</div>
+        <div id="version">v0.0.0</div>
+    </div>
+    
     <div id="messages"></div>
+
+    <h1>Run program!</h1>
+    <button id="run_program">프로그램 실행</button>
 
     <script>
         /* ipcRenderer 를 직접 노출하는 경우, 비활성화 권장 */
         const { ipcRenderer } = require('electron');
 
-        document.getElementById('openGoogle').addEventListener('click', async () => { // 버튼에 클릭 이벤트 리스너 추가
+        document.getElementById('run_program').addEventListener('click', async () => { // 버튼에 클릭 이벤트 리스너 추가
             // 메인 프로세스에 'open-google' 메시지 전송            
             try {
-                ipcRenderer.send('open-google');
+                ipcRenderer.send('run_program');
 
             } catch (error) {
                 console.log(error);
@@ -46,10 +50,8 @@
         document.getElementById('version').innerText = version;
 
         ipcRenderer.on('message', function(event, text) {
-            var container = document.getElementById('messages');
-            var message = document.createElement('div');
+            var message = document.getElementById('messages');
             message.innerHTML = text;
-            container.appendChild(message);
         });
 
         const waitForTimeout = (ms) => {
@@ -69,5 +71,55 @@
       width: 0px;
       height: 0px;
     }
+
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f8f8f9;
+        color: #333;
+        padding: 20px;
+        margin: 0;
+    }
+        
+    button {
+        background-color: #0052cc;
+        color: white;
+        border: none;
+        padding: 5px 15px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 13px;
+        margin: 4px 2px;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: background-color 0.3s;
+    }
+
+    button:hover {
+        background-color: #003d99;
+    }
+    
+    h1 {
+        color: #0052cc;
+        font-size: 24px;
+    }
+    
+    .flex-container {
+        display: flex;
+        align-items: center;
+        font-size: 13px;
+    }
+    
+    .flex-container > div {
+        margin-right: 5px;
+    }
+    
+    #messages {
+        margin-top: 20px;
+        padding: 10px;
+        background-color: #e9ecef;
+        border-radius: 8px;
+    }
+
 </style>
 </html>
