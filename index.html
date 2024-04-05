@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>경매올리고 자동 프로그램 (ace.helper v1.0.3)</title>
+    <title class="title"></title>
 </head>
 <body>
 
@@ -10,23 +10,34 @@
     <!-- 자동 업데이트 관련 -->
     <h1>Latest version update.</h1>
     <div class="flex-container">
-        <div >현재 버전 :</div>
+        <div>현재 버전 :</div>
         <div id="version">v0.0.0</div>
     </div>
     
-    <div id="messages"></div>
+    <div id="message"></div>
 
-    <h1>Run program!</h1>
-    <button id="run_program">프로그램 실행</button>
+    <h4>Run this session.</h4>
+    <div id="message-run"></div>
+    <button id="chk_session">자동화 세션 실행</button>
 
     <script>
         /* ipcRenderer 를 직접 노출하는 경우, 비활성화 권장 */
         const { ipcRenderer } = require('electron');
 
-        document.getElementById('run_program').addEventListener('click', async () => { // 버튼에 클릭 이벤트 리스너 추가
-            // 메인 프로세스에 'open-google' 메시지 전송            
+        /* 자동 업데이트 관련 */
+        let version = window.location.hash.substring(1);
+        document.querySelector('.title').innerText = `경매올리고 자동 프로그램 (ace.helper ${version})`;
+        document.getElementById('version').innerText = version;
+
+        ipcRenderer.on('message', function(event, text) {
+            let message = document.getElementById('message');
+            message.innerHTML = text;
+        });
+
+        /* 프로그램 실행 관련 */
+        document.getElementById('chk_session').addEventListener('click', async () => { // 버튼에 클릭 이벤트 리스너 추가   
             try {
-                ipcRenderer.send('run_program');
+                ipcRenderer.send('chk_session'); // 메인 프로세스에 'chk_session' 메시지 전송  
 
             } catch (error) {
                 console.log(error);
@@ -45,12 +56,8 @@
         //     window.electronAPI.openGoogle();
         // });
 
-        /* 자동 업데이트 관련 */
-        let version = window.location.hash.substring(1);
-        document.getElementById('version').innerText = version;
-
-        ipcRenderer.on('message', function(event, text) {
-            var message = document.getElementById('messages');
+        ipcRenderer.on('message-run', function(event, text) {
+            var message = document.getElementById('message-run');
             message.innerHTML = text;
         });
 
@@ -61,16 +68,17 @@
     </script>
 </body>
 <style>
-    webview {
-      display:inline-flex;
-      width:640px;
-      height:480px;
+
+    /* webview {
+        display:inline-flex;
+        width:640px;
+        height:480px;
     }
     webview.hide {
-      flex: 0 1;
-      width: 0px;
-      height: 0px;
-    }
+        flex: 0 1;
+        width: 0px;
+        height: 0px;
+    } */
 
     body {
         font-family: 'Arial', sans-serif;
@@ -81,14 +89,14 @@
     }
         
     button {
-        background-color: #0052cc;
+        background-color: #3b4657;
         color: white;
         border: none;
-        padding: 5px 15px;
+        padding: 10px 20px;
         text-align: center;
         text-decoration: none;
         display: inline-block;
-        font-size: 13px;
+        font-size: 14px;
         margin: 4px 2px;
         cursor: pointer;
         border-radius: 8px;
@@ -96,12 +104,16 @@
     }
 
     button:hover {
-        background-color: #003d99;
+        background-color: #142135;
     }
     
     h1 {
-        color: #0052cc;
+        color: #3b4657;
         font-size: 24px;
+    }
+
+    h4 {
+        color: #3b4657;
     }
     
     .flex-container {
@@ -114,11 +126,21 @@
         margin-right: 5px;
     }
     
-    #messages {
+    #message {
         margin-top: 20px;
         padding: 10px;
         background-color: #e9ecef;
         border-radius: 8px;
+        font-size: 12px;
+    }
+
+    #message-run {
+        margin-top: 20px;
+        margin-bottom: 20px;
+        padding: 10px;
+        background-color: #e9ecef;
+        border-radius: 8px;
+        font-size: 12px;
     }
 
 </style>

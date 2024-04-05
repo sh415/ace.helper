@@ -5,10 +5,12 @@ const {autoUpdater} = require("electron-updater");
 
 /** 자동 업데이트 관련 */
 autoUpdater.autoInstallOnAppQuit = false; // 프로그램 종료시 업데이트 여부
-let updateWin;
+let win;
+let chk; // 세션 체크리스트
+let gpt; // GPT 연동메뉴
 
 function writeMessageToWindow(text) { // 현재 상태를 화면으로 볼 수 있도록 html로 전달하는 함수
-    updateWin.webContents.send("message", text);
+    win.webContents.send("message", text);
 }
 
 function createWindow () {
@@ -28,19 +30,20 @@ function createWindow () {
     // win.loadFile('index.html')
 
     /** 자동 업데이트 적용 */
-    updateWin = new BrowserWindow({
-        width: 1080,
+    win = new BrowserWindow({
+        width: 960,
         height: 720,
         webPreferences: { 
           nodeIntegration: true,
           contextIsolation: false,
-          webviewTag:true,
+          // webviewTag:true,
         },
-      });
-    
-      // updateWin.webContents.openDevTools();
-      updateWin.loadURL(`file://${__dirname}/index.html#v${app.getVersion()}`);
-      return updateWin;
+    });
+
+    // win.webContents.openDevTools(); // 개발자 모드 활성화
+
+    win.loadURL(`file://${__dirname}/index.html#v${app.getVersion()}`);
+    return win;
 }
 
 /** 자동 업데이트 관련 */
@@ -77,7 +80,7 @@ autoUpdater.on("update-downloaded", (info) => { // 업데이트 설치 파일 �
       message: "프로그램 업데이트를 진행하시겠습니까?",
     };
     
-    dialog.showMessageBox(updateWin, option).then(function(res){
+    dialog.showMessageBox(win, option).then(function(res){
       writeMessageToWindow(res.response.toString());
       
       // 위에 option.buttons의 Index = res.response
@@ -101,126 +104,282 @@ app.on('window-all-closed', () => {
     app.quit();
 })
 
-/** 네이버 로그인 */
-ipcMain.on('run_program', async (event) => {
-    writeMessageToWindow('ipcMain!');
-    const min = 100;
-    const max = 500;
-    let wait = 0;
+/** 네이버 로그인 테스트 */
+// ipcMain.on('run_program', async (event) => {
+//     writeMessageToWindow('ipcMain!');
+//     const min = 100;
+//     const max = 500;
+//     let wait = 0;
 
+//     const browser = await puppeteer.launch({ 
+//         // headless: 'new',
+//         headless: false, // headless: false 로 설정하여 GUI 모드에서 브라우저를 실행
+//         executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+//         // args: [
+//         //     '--no-sandbox',
+//         //     '--disable-setuid-sandbox',
+//         //     '--disable-web-security', // CORS 정책 우회
+//         //     '--disable-features=IsolateOrigins,site-per-process' // 일부 탐지 메커니즘 우회
+//         // ]
+//     }); 
+//     let page = null;
+
+//     const id = 'apxkf1070';
+//     const pw = 'af75951535%';
+//     const idArr = [...id];
+//     const pwArr = [...pw];
+
+//     try {
+//         page = await browser.newPage();
+//         await page.setViewport({
+//             width: 1280,
+//             height: 720
+//         });
+//         // // userAgent 설정
+//         // await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.6312.86 Safari/537.36');
+//         // await page.setExtraHTTPHeaders({
+//         //     'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7'
+//         // });
+
+//         await page.goto('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/');
+//         // await page.waitForTimeout(3000);
+
+//         wait = waitForSafety(3000, 5000);
+//         await new Promise((page) => setTimeout(page, wait));
+
+//         await page.click('#id');
+//         wait = waitForSafety(1000, 3000);
+//         await new Promise((page) => setTimeout(page, wait));
+
+//         /** 1. type() 사용 */
+//         //await page.type('#id', 'userId');
+
+//         /** 2. keyboard.type() 사용  */
+//         // await page.keyboard.type(id);
+
+//         /** 3. keyboard.down(), press() 사용 */
+//         for (let i of idArr) {
+//             const inputVal = keyboardList.filter(e => e.shift === i || e.key === i);
+//             if (inputVal.length > 0) {
+//                 const code = inputVal[0].code;
+//                 const shiftLeft = inputVal[0].shift === i ? 'ShiftLeft': '';
+//                 if (shiftLeft) {
+//                     await page.keyboard.down(shiftLeft);
+//                     wait = waitForSafety(min, max);
+//                     await new Promise((page) => setTimeout(page, wait));
+//                     await page.keyboard.press(code);
+//                     wait = waitForSafety(min, max);
+//                     await new Promise((page) => setTimeout(page, wait));
+//                     await page.keyboard.up(shiftLeft);
+//                 } else {
+//                     await page.keyboard.press(code);
+//                 }
+//                 wait = waitForSafety(min, max);
+//                 await new Promise((page) => setTimeout(page, wait));
+//             }
+//         }
+//         wait = waitForSafety(1000, 3000);
+//         await new Promise((page) => setTimeout(page, wait));
+
+//         await page.click('#pw');
+//         wait = waitForSafety(1000, 3000);
+//         await new Promise((page) => setTimeout(page, wait));
+
+//         /** 3. keyboard.down(), press() 사용 */
+//         for (let p of pwArr) {
+//             const inputVal = keyboardList.filter(e => e.shift === p || e.key === p);
+//             if (inputVal.length > 0) {
+//                 const code = inputVal[0].code;
+//                 const shiftLeft = inputVal[0].shift === p ? 'ShiftLeft': '';
+//                 if (shiftLeft) {
+//                     await page.keyboard.down(shiftLeft);
+//                     wait = waitForSafety(min, max);
+//                     await new Promise((page) => setTimeout(page, wait));
+//                     await page.keyboard.press(code);
+//                     wait = waitForSafety(min, max);
+//                     await new Promise((page) => setTimeout(page, wait));
+//                     await page.keyboard.up(shiftLeft);
+//                 } else {
+//                     await page.keyboard.press(code);
+//                 }
+//                 wait = waitForSafety(min, max);
+//                 await new Promise((page) => setTimeout(page, wait));
+//             }
+//         }
+//         wait = waitForSafety(1000, 3000);
+//         await new Promise((page) => setTimeout(page, wait));
+
+//         await page.click('.btn_login');
+//         await new Promise((page) => setTimeout(page, 20000));
+
+//     } catch (error) {
+//         console.log(error);
+
+//     } finally {
+//         if (page !== null) await page.close(); // finally 절에서 페이지를 닫음
+//         await browser.close();
+//     }
+// });
+
+function writeMessageRunToWindow(text) { // 프로그램 로그를 화면으로 볼 수 있도록 html로 전달하는 함수
+    win.webContents.send("message-run", text);
+}
+
+/** 자동화 세션 실행 */
+const createChk = async () => { // 체크리스트 창 보이기
+
+    chk = new BrowserWindow({
+        parent: win,
+        width: 640,
+        height: 480,
+        webPreferences: { 
+            nodeIntegration: true,
+            contextIsolation: false,
+        },
+        show: false,
+        modal: true,
+    });
+    
+    chk.setMenu(null);
+    chk.loadURL(`file://${__dirname}/chk.html#v${app.getVersion()}`);
+    chk.show();
+}
+
+ipcMain.on('chk_session', async (event) => { // win -> chk_session
+    await createChk();
+});
+
+function writeMessageChkChromeToWindow(data) { // 프로그램 로그를 화면으로 볼 수 있도록 html로 전달하는 함수
+    chk.webContents.send("message-chrome", data);
+}
+
+ipcMain.on('chk-chrome', async (event) => { // chk -> chk-chrome : 크롬 브라우저 설치 확인
     const browser = await puppeteer.launch({ 
-        // headless: 'new',
-        headless: false, // headless: false 로 설정하여 GUI 모드에서 브라우저를 실행
+        headless: 'new',
         executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
-        // args: [
-        //     '--no-sandbox',
-        //     '--disable-setuid-sandbox',
-        //     '--disable-web-security', // CORS 정책 우회
-        //     '--disable-features=IsolateOrigins,site-per-process' // 일부 탐지 메커니즘 우회
-        // ]
-    }); 
+    });
     let page = null;
 
-    const id = 'apxkf1070';
-    const pw = 'af75951535%';
-    const idArr = [...id];
-    const pwArr = [...pw];
+    try {
+        writeMessageChkChromeToWindow({ text: '크롬 브라우저 설치 확인중...', result: false });
+        page = await browser.newPage();
+        await waitForTimeout(3000);
+        writeMessageChkChromeToWindow({ text: '크롬 브라우저 설치 확인', result: true });
+        
+    } catch (error) {
+        console.log(error);
+        writeMessageChkChromeToWindow({ text: '크롬 브라우저가 설치되지 않았습니다.', result: false });
+
+    } finally {
+        await browser.close();
+    }
+});
+
+ipcMain.on('run_session', async (event) => { // chk -> run_session
+
+    const browser = await puppeteer.launch({ 
+        headless: false,
+        executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+    }); 
+    let page1 = null;
+    let page2 = null;
 
     try {
-        page = await browser.newPage();
-        await page.setViewport({
-            width: 1280,
-            height: 720
-        });
-        // // userAgent 설정
-        // await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.6312.86 Safari/537.36');
-        // await page.setExtraHTTPHeaders({
-        //     'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7'
-        // });
+        writeMessageRunToWindow('세션 실행중...');
+        page1 = await browser.newPage();
 
-        await page.goto('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/');
-        // await page.waitForTimeout(3000);
+        // 1. 네이버 로그인 대기
+        const naverLogin = await awaitNaverLogin(page1);
 
-        wait = waitForSafety(3000, 5000);
-        await new Promise((page) => setTimeout(page, wait));
-
-        await page.click('#id');
-        wait = waitForSafety(1000, 3000);
-        await new Promise((page) => setTimeout(page, wait));
-
-        /** 1. type() 사용 */
-        //await page.type('#id', 'userId');
-
-        /** 2. keyboard.type() 사용  */
-        // await page.keyboard.type(id);
-
-        /** 3. keyboard.down(), press() 사용 */
-        for (let i of idArr) {
-            const inputVal = keyboardList.filter(e => e.shift === i || e.key === i);
-            if (inputVal.length > 0) {
-                const code = inputVal[0].code;
-                const shiftLeft = inputVal[0].shift === i ? 'ShiftLeft': '';
-                if (shiftLeft) {
-                    await page.keyboard.down(shiftLeft);
-                    wait = waitForSafety(min, max);
-                    await new Promise((page) => setTimeout(page, wait));
-                    await page.keyboard.press(code);
-                    wait = waitForSafety(min, max);
-                    await new Promise((page) => setTimeout(page, wait));
-                    await page.keyboard.up(shiftLeft);
-                } else {
-                    await page.keyboard.press(code);
-                }
-                wait = waitForSafety(min, max);
-                await new Promise((page) => setTimeout(page, wait));
-            }
+        if (!naverLogin) {
+            return;
         }
-        wait = waitForSafety(1000, 3000);
-        await new Promise((page) => setTimeout(page, wait));
+        await waitForTimeout(3000);
 
-        await page.click('#pw');
-        wait = waitForSafety(1000, 3000);
-        await new Promise((page) => setTimeout(page, wait));
+        // 2. 경매올리고 로그인
+        page2 = await browser.newPage();
+        const auctionLogin = await acutionLogin(page2);
 
-        /** 3. keyboard.down(), press() 사용 */
-        for (let p of pwArr) {
-            const inputVal = keyboardList.filter(e => e.shift === p || e.key === p);
-            if (inputVal.length > 0) {
-                const code = inputVal[0].code;
-                const shiftLeft = inputVal[0].shift === p ? 'ShiftLeft': '';
-                if (shiftLeft) {
-                    await page.keyboard.down(shiftLeft);
-                    wait = waitForSafety(min, max);
-                    await new Promise((page) => setTimeout(page, wait));
-                    await page.keyboard.press(code);
-                    wait = waitForSafety(min, max);
-                    await new Promise((page) => setTimeout(page, wait));
-                    await page.keyboard.up(shiftLeft);
-                } else {
-                    await page.keyboard.press(code);
-                }
-                wait = waitForSafety(min, max);
-                await new Promise((page) => setTimeout(page, wait));
-            }
-        }
-        wait = waitForSafety(1000, 3000);
-        await new Promise((page) => setTimeout(page, wait));
-
-        await page.click('.btn_login');
-        await new Promise((page) => setTimeout(page, 20000));
+        // 세션 종료 메세지
+        writeMessageRunToWindow('세션이 정상 종료되었습니다.');
 
     } catch (error) {
         console.log(error);
 
     } finally {
-        if (page !== null) await page.close(); // finally 절에서 페이지를 닫음
         await browser.close();
     }
 });
 
-// const waitForTimeout = (ms) => {
-//     return new Promise(resolve => setTimeout(resolve, ms));
-// }
+/** 네이버 로그인 대기 */
+const awaitNaverLogin = async (page) => {
+    try {
+        await page.goto('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/');
+        // await new Promise((page) => setTimeout(page, 3000));
+
+        await page.setViewport({
+            width: 1280,
+            height: 720,
+            deviceScaleFactor: 1,
+        });
+
+        while (true) {
+            await new Promise((page) => setTimeout(page, 1000));
+            const e = await page.evaluate(() => {
+                const elem = document.querySelector('.switch_btn'); // 로그인 화면의 스위치 객체 존재여부를 파악하여 로그인 여부 판별
+                return elem;
+            });
+            if (e) {
+                writeMessageRunToWindow('Step1. 네이버 로그인을 진행해주세요.');
+            } else {
+                break;
+            }
+        }
+        return true;
+
+    } catch (error) {
+        console.log('awaitNaverLogin() -> error', error);
+        writeMessageRunToWindow('Step1. 세션이 비정상적으로 종료되었습니다. 세션을 다시 실행해주세요. (사유: 네이버 로그인중 오류발생)');
+        return false;
+    }
+}
+
+/** 경매올리고 로그인 */
+const acutionLogin = async (page) => {
+    try {
+        await page.goto('https://www.auctionup.co.kr/member/member01.php');
+        await new Promise((page) => setTimeout(page, 3000));
+
+        await page.setViewport({
+            width: 1280,
+            height: 720,
+            deviceScaleFactor: 1,
+        });
+
+        // while (true) {
+        //     await new Promise((page) => setTimeout(page, 1000));
+        //     const e = await page.evaluate(() => {
+        //         const elem = document.querySelector('.switch_btn'); // 로그인 화면의 스위치 객체 존재여부를 파악하여 로그인 여부 판별
+        //         return elem;
+        //     });
+        //     if (e) {
+        //         writeMessageRunToWindow('Step1. 네이버 로그인을 진행해주세요.');
+        //     } else {
+        //         break;
+        //     }
+        // }
+        return true;
+
+    } catch (error) {
+        console.log('awaitNaverLogin() -> error', error);
+        writeMessageRunToWindow('Step2. 세션이 비정상적으로 종료되었습니다. 세션을 다시 실행해주세요. (사유: 경매올리고 로그인중 오류발생)');
+        return false;
+    }
+}
+
+const waitForTimeout = (ms) => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 const waitForSafety = (min, max) => { // 대기시간 랜덤설정
     const wait = Math.floor(Math.random() * (max - min + 1) + min);

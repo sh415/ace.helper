@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>체크리스트</title>
+</head>
+<body>
+    <div class="content">
+        <h1>A few things to check before running...</h1>
+        <div class="spinner"></div>
+    </div>
+
+    <div class="check-container">
+        <h5 class="chk_1">1. 크롬 브라우저 설치 확인</h5>
+        <span class="checkmark_1">✔</span>
+    </div>
+    <div id="message-chrome"></div>
+
+    <h5>2. 경매올리고 ID/PW 등록 확인</h5>
+    <div id="message-auction"></div>
+    
+    <button id="run_session">실행</button>
+
+    <script>
+        /* ipcRenderer 를 직접 노출하는 경우, 비활성화 권장 */
+        const { ipcRenderer } = require('electron');
+
+        window.addEventListener('DOMContentLoaded', async () => {
+
+            // 1. 크롬 브라우저 설치 확인
+            await chkChrome();
+        });
+
+        /* 크롬 브라우저 설치 관련 */
+        const chkChrome = () => {
+            ipcRenderer.send('chk-chrome');
+        }
+
+        ipcRenderer.on('message-chrome', function(event, data) {
+            let message = document.getElementById('message-chrome');
+            message.innerHTML = data.text;
+            if (data.result) {
+                let checkmark = document.querySelector('.checkmark_1');
+                checkmark.classList.add('visible');
+
+                let chk_1 = document.querySelector('.chk_1');
+                chk_1.classList.add('check');
+            }
+        });
+
+        /* 프로그램 실행 관련 */
+        document.getElementById('run_session').addEventListener('click', async () => { // 버튼에 클릭 이벤트 리스너 추가   
+            try {
+                ipcRenderer.send('run_session'); // 메인 프로세스에 'run_session' 메시지 전송  
+
+            } catch (error) {
+                console.log(error);
+            }
+        });
+
+        const waitForTimeout = (ms) => {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+    </script>
+</body>
+<style>
+    
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f8f8f9;
+        color: #333;
+        padding: 20px;
+        margin: 0;
+    }
+        
+    button {
+        background-color: #3b4657;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+        margin: 4px 2px;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: background-color 0.3s;
+    }
+
+    button:hover {
+        background-color: #142135;
+    }
+
+    .content {
+        display: flex; /* Flexbox 레이아웃 적용 */
+        align-items: center; /* 세로 중앙 정렬 */
+    }
+
+    .spinner {
+        margin-left: 20px;
+        margin-right: 20px;
+        border: 4px solid rgba(0, 0, 0, 0.1); /* 바깥쪽 원의 테두리 색상 (반투명) */
+        border-left-color: #3b4657; /* 왼쪽 테두리 색상 (회전하는 효과를 위해) */
+        border-radius: 50%; /* 원형 스피너 */
+        width: 16px; /* 스피너 크기 */
+        height: 16px; /* 스피너 크기 */
+        animation: spin 2.0s linear infinite; /* 회전 애니메이션 */
+    }
+
+    /* keyframes를 사용한 회전 애니메이션 정의 */
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+    
+    h1 {
+        color: #3b4657;
+        font-size: 24px;
+    }
+
+    h4 {
+        color: #3b4657;
+    }
+
+    /* h5 {
+        color: #3b4657;
+    } */
+    
+    .flex-container {
+        display: flex;
+        align-items: center;
+        font-size: 13px;
+    }
+    
+    .flex-container > div {
+        margin-right: 5px;
+    }
+    
+    #message-chrome {
+        margin-top: 0px;
+        padding: 10px;
+        background-color: #e9ecef;
+        border-radius: 8px;
+        font-size: 12px;
+    }
+
+    .check-container {
+        display: flex;
+        align-items: center;
+    }
+
+    .checkmark_1 {
+        display: none;
+    }
+
+    .checkmark_1.visible {
+        display: inline;
+        color: green;
+        opacity: 0;
+        margin-left: 5px;
+        animation: fadeInCheck 2s forwards;
+    }
+
+    .chk_1 {
+        color: #a1abbb;
+    }
+
+    .chk_1.check {
+        color: #3b4657;
+        animation: fadeIn 1.2s ease forwards;
+    }
+
+    @keyframes fadeInCheck {
+        0% {
+            opacity: 0;
+            transform: scale(0);
+        }
+        50% {
+            opacity: 0.5;
+            transform: scale(1.2);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+</style>
+</html>
