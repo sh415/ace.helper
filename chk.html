@@ -31,8 +31,19 @@
         <button class="a_button" id="set_auction">계정 설정</button>
     </div>
     <div id="message-chk2"></div>
+
+    <div class="check-container">
+        <h5 class="chk_3">3. 이미지 폴더 경로 설정 확인</h5>
+        <span class="checkmark_3">✔</span>
+    </div>
+    <div style="margin-bottom: 5px;">
+        <button class="b_button" id="set_path">이미지 경로 설정</button>
+    </div>
+    <div id="message-chk3"></div>
     
-    <button id="run_session">실행</button>
+    <div style="margin-top: 20px;">
+        <button id="run_session">실행</button>
+    </div>
 
     <script>
         /* ipcRenderer 를 직접 노출하는 경우, 비활성화 권장 */
@@ -45,6 +56,9 @@
 
             // 2. 경매올리고 로그인 테스트
             await chkAuction();
+
+            // 3. 이미지 경로 확인
+            await chkPath();
         });
 
         /* 1. 크롬 브라우저 설치 관련 */
@@ -99,7 +113,6 @@
             }
         });
 
-        /* 경매올리고 계정 설정 */
         document.getElementById('set_auction').addEventListener('click', async () => { // 버튼에 클릭 이벤트 리스너 추가   
             try {
                 const id = document.querySelector('#username').value;
@@ -108,6 +121,32 @@
 
             } catch (error) {
                 console.log(error);
+            }
+        });
+
+        /* 3. 이미지 경로 설정 관련 */
+        const chkPath = () => {
+            ipcRenderer.send('chk_path');
+        }
+
+        document.getElementById('set_path').addEventListener('click', async () => { // 버튼에 클릭 이벤트 리스너 추가   
+            try {
+                ipcRenderer.send('set_path'); // 메인 프로세스에 'set_path' 메시지 전송  
+
+            } catch (error) {
+                console.log(error);
+            }
+        });
+
+        ipcRenderer.on('message-chk3', function(event, data) {
+            let message = document.getElementById('message-chk3');
+            message.innerHTML = data.text;
+            if (data.result) {
+                let checkmark = document.querySelector('.checkmark_3');
+                checkmark.classList.add('visible');
+
+                let chk_3 = document.querySelector('.chk_3');
+                chk_3.classList.add('check');
             }
         });
 
@@ -315,6 +354,49 @@
         background-color: #aaa; /* 밝은 회색으로 변경 */
         color: #666; /* 어두운 회색으로 글자 색 변경 */
         cursor: not-allowed; /* 커서를 '금지' 아이콘으로 변경 */
+    }
+
+    .chk_3 {
+        color: #a1abbb;
+    }
+
+    .chk_3.check {
+        color: #3b4657;
+        animation: fadeIn 1.2s ease forwards;
+    }
+
+    .checkmark_3 {
+        display: none;
+    }
+
+    .checkmark_3.visible {
+        display: inline;
+        color: #32cd32;
+        opacity: 0;
+        margin-left: 10px;
+        animation: fadeInCheck 2s forwards;
+    }
+
+    #message-chk3 {
+        margin-top: 0px;
+        padding: 10px;
+        background-color: #e9ecef;
+        border-radius: 8px;
+        font-size: 12px;
+    }
+
+    .b_button {
+        padding: 3px 10px 3px 10px;
+        border: none;
+        border-radius: 4px;
+        background-color: #007bff;
+        color: white;
+        cursor: pointer;
+        font-size: 11px;
+    }
+
+    .b_button:hover {
+        background-color: #0056b3;
     }
 
     @keyframes fadeInCheck {

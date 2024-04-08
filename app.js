@@ -304,7 +304,7 @@ ipcMain.on('chk-auction', async (event) => { // chk -> chk-auction : 경매올�
         // 등록계정의 유효성 검사
         writeMessageChkAuctionToWindow({ text: '등록한 계정이 유효한지 확인중...', result: 33 });
         const browser = await puppeteer.launch({ 
-            headless: false, //'new',
+            headless: 'new',
             executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
         });
         let page = null;
@@ -354,7 +354,7 @@ ipcMain.on('set_auction', async (event, data) => { // chk -> set-auction : 경�
     try {
         writeMessageChkAuctionToWindow({ text: '등록한 계정 검사중...', result: 11 });
         const browser = await puppeteer.launch({ 
-            headless: false, //'new',
+            headless: 'new',
             executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
         });
         let page = null;
@@ -416,6 +416,66 @@ ipcMain.on('set_auction', async (event, data) => { // chk -> set-auction : 경�
             });
         }
         
+    } catch (error) {
+        console.log(error);
+    }
+});
+
+function writeMessageChkPathToWindow(data) { // 프로그램 로그를 화면으로 볼 수 있도록 html로 전달하는 함수
+    chk.webContents.send("message-chk3", data);
+}
+
+ipcMain.on('chk_path', async (event) => { // chk -> chk_path : 이미지 경로 설정 확인
+    try {
+        const db = new Datastore({ 
+            filename: '../database.db', 
+            autoload: true,
+        });
+        const findOneAsync = promisify(db.findOne.bind(db));
+        const result = await findOneAsync({ _id: 'path' });
+
+        if (!result) {
+            writeMessageChkPathToWindow({ text: '이미지 폴더를 설정하지 않았습니다.', result: false });
+            return;
+
+        } else {
+            writeMessageChkPathToWindow({ text: `폴더 위치: ${result.path}`, result: true });
+        }
+    
+    } catch (error) {
+        console.log(error);
+    }
+});
+
+ipcMain.on('set_path', async (event) => { // chk -> set_path : 이미지 경로 설정
+    try {
+        const db = new Datastore({ 
+            filename: '../database.db', 
+            autoload: true,
+        });
+
+        dialog.showOpenDialog(win, {
+            properties: ['openDirectory']
+        }).then(async (result) => {
+            console.log(result.filePaths); // 선택한 폴더의 경로 출력
+            const query = { _id: 'path' };
+
+            db.update(query, { $set: { path: result.filePaths[0] } }, { upsert : true }, (err, newDoc) => { // 문서 업데이트 시도, 없으면 새 레코드 추가
+                if (err) {
+                    console.error('업데이트 중 오류 발생:', err);
+                    return;
+                }
+                console.log(`문서 업데이트 성공. 영향 받은 문서 수: ${newDoc}`);
+            });
+
+            const findOneAsync = promisify(db.findOne.bind(db));
+            const findResult = await findOneAsync({ _id: 'path' });
+            writeMessageChkPathToWindow({ text: `폴더 위치: ${findResult.path}`, result: true });
+
+        }).catch(err => {
+            console.log(err);
+        });
+    
     } catch (error) {
         console.log(error);
     }
