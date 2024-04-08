@@ -5,7 +5,7 @@
 </head>
 <body>
     <div class="content">
-        <h1>A few things to check before running...</h1>
+        <h2>실행 전, 몇 가지 확인 사항이 있습니다...</h2>
         <div class="spinner"></div>
     </div>
 
@@ -13,10 +13,24 @@
         <h5 class="chk_1">1. 크롬 브라우저 설치 확인</h5>
         <span class="checkmark_1">✔</span>
     </div>
-    <div id="message-chrome"></div>
+    <div id="message-chk1"></div>
 
-    <h5>2. 경매올리고 ID/PW 등록 확인</h5>
-    <div id="message-auction"></div>
+    <div class="check-container">
+        <h5 class="chk_2">2. 경매올리고 ID/PW 등록 확인</h5>
+        <span class="checkmark_2">✔</span>
+    </div>
+    <div class="login-form" style="display: none;">
+        <div class="input-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div class="input-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button class="a_button" id="set_auction">계정 설정</button>
+    </div>
+    <div id="message-chk2"></div>
     
     <button id="run_session">실행</button>
 
@@ -28,15 +42,18 @@
 
             // 1. 크롬 브라우저 설치 확인
             await chkChrome();
+
+            // 2. 경매올리고 로그인 테스트
+            await chkAuction();
         });
 
-        /* 크롬 브라우저 설치 관련 */
+        /* 1. 크롬 브라우저 설치 관련 */
         const chkChrome = () => {
             ipcRenderer.send('chk-chrome');
         }
 
-        ipcRenderer.on('message-chrome', function(event, data) {
-            let message = document.getElementById('message-chrome');
+        ipcRenderer.on('message-chk1', function(event, data) {
+            let message = document.getElementById('message-chk1');
             message.innerHTML = data.text;
             if (data.result) {
                 let checkmark = document.querySelector('.checkmark_1');
@@ -44,6 +61,53 @@
 
                 let chk_1 = document.querySelector('.chk_1');
                 chk_1.classList.add('check');
+            }
+        });
+
+        /* 2. 경매올리고 로그인 테스트 관련 */
+        const chkAuction = () => {
+            ipcRenderer.send('chk-auction');
+        }
+
+        ipcRenderer.on('message-chk2', function(event, data) {
+            let message = document.getElementById('message-chk2');
+            message.innerHTML = data.text;
+            if (data.result === 11) { // 등록한 계정 검사
+                document.getElementById('set_auction').disabled = true;
+
+                // alert('계정이 등록되었습니다.');
+                // let inputForm = document.querySelector('.login-form').style.display = 'none';
+
+            } else if (data.result === 33) { // 등록한 계정이 유효한지 확인
+
+            } else if (data.result === 44) {
+                let inputForm = document.querySelector('.login-form').style.display = 'block';
+                document.getElementById('set_auction').disabled = false;
+
+            } else if (data.result === 55) { // 계정 유효 확인, 잔여일 알림
+                let inputForm = document.querySelector('.login-form').style.display = 'none';
+                document.getElementById('set_auction').disabled = false;
+
+                let checkmark2 = document.querySelector('.checkmark_2');
+                checkmark2.classList.add('visible');
+                
+                let chk_2 = document.querySelector('.chk_2');
+                chk_2.classList.add('check');
+            } 
+            else if (!data.result) { // false 응답이 올 경우 ID/PW 입력폼 보이기
+                let inputForm = document.querySelector('.login-form').style.display = 'block';
+            }
+        });
+
+        /* 경매올리고 계정 설정 */
+        document.getElementById('set_auction').addEventListener('click', async () => { // 버튼에 클릭 이벤트 리스너 추가   
+            try {
+                const id = document.querySelector('#username').value;
+                const pw = document.querySelector('#password').value;
+                ipcRenderer.send('set_auction', { id: id, pw:pw }); // 메인 프로세스에 'set_auction' 메시지 전송
+
+            } catch (error) {
+                console.log(error);
             }
         });
 
@@ -120,7 +184,14 @@
     
     h1 {
         color: #3b4657;
-        font-size: 24px;
+    }
+
+    h2 {
+        color: #3b4657;
+    }
+
+    h3 {
+        color: #3b4657;
     }
 
     h4 {
@@ -141,29 +212,9 @@
         margin-right: 5px;
     }
     
-    #message-chrome {
-        margin-top: 0px;
-        padding: 10px;
-        background-color: #e9ecef;
-        border-radius: 8px;
-        font-size: 12px;
-    }
-
     .check-container {
         display: flex;
         align-items: center;
-    }
-
-    .checkmark_1 {
-        display: none;
-    }
-
-    .checkmark_1.visible {
-        display: inline;
-        color: green;
-        opacity: 0;
-        margin-left: 5px;
-        animation: fadeInCheck 2s forwards;
     }
 
     .chk_1 {
@@ -173,6 +224,97 @@
     .chk_1.check {
         color: #3b4657;
         animation: fadeIn 1.2s ease forwards;
+    }
+
+    .checkmark_1 {
+        display: none;
+    }
+
+    .checkmark_1.visible {
+        display: inline;
+        color: #32cd32;
+        opacity: 0;
+        margin-left: 10px;
+        animation: fadeInCheck 2s forwards;
+    }
+
+    #message-chk1 {
+        margin-top: 0px;
+        padding: 10px;
+        background-color: #e9ecef;
+        border-radius: 8px;
+        font-size: 12px;
+    }
+
+    .chk_2 {
+        color: #a1abbb;
+    }
+
+    .chk_2.check {
+        color: #3b4657;
+        animation: fadeIn 1.2s ease forwards;
+    }
+
+    .checkmark_2 {
+        display: none;
+    }
+
+    .checkmark_2.visible {
+        display: inline;
+        color: #32cd32;
+        opacity: 0;
+        margin-left: 10px;
+        animation: fadeInCheck 2s forwards;
+    }
+
+    #message-chk2 {
+        margin-top: 0px;
+        padding: 10px;
+        background-color: #e9ecef;
+        border-radius: 8px;
+        font-size: 12px;
+    }
+
+    .login-form {
+        background: white;
+        padding: 20px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .input-group label {
+        display: block;
+        margin-bottom: 5px;
+        color: #666;
+    }
+
+    .input-group input {
+        width: 300px;
+        padding: 10px;
+        margin-bottom: 5px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .a_button {
+        width: 320px;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        background-color: #007bff;
+        color: white;
+        cursor: pointer;
+    }
+
+    .a_button:hover {
+        background-color: #0056b3;
+    }
+
+    .a_button:disabled { /* 비활성화 상태일 때의 스타일 */
+        background-color: #aaa; /* 밝은 회색으로 변경 */
+        color: #666; /* 어두운 회색으로 글자 색 변경 */
+        cursor: not-allowed; /* 커서를 '금지' 아이콘으로 변경 */
     }
 
     @keyframes fadeInCheck {

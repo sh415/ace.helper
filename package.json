@@ -1,6 +1,6 @@
 {
   "name": "ace.helper",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "",
   "main": "app.js",
   "repository": {
@@ -17,6 +17,7 @@
   "license": "ISC",
   "dependencies": {
     "electron-updater": "^6.1.8",
+    "nedb": "^1.8.0",
     "puppeteer": "^22.6.0"
   },
   "devDependencies": {

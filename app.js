@@ -2,12 +2,14 @@ const { app, dialog, BrowserWindow, ipcMain } = require('electron')
 const path = require('path')
 const puppeteer = require('puppeteer');
 const {autoUpdater} = require("electron-updater");
+const Datastore = require('nedb');
+const { promisify } = require('util');
 
 /** 자동 업데이트 관련 */
 autoUpdater.autoInstallOnAppQuit = false; // 프로그램 종료시 업데이트 여부
-let win;
-let chk; // 세션 체크리스트
-let gpt; // GPT 연동메뉴
+let win; // 메인 창
+let chk; // 세션 체크리스트 창
+let gpt; // GPT 연동메뉴 창
 
 function writeMessageToWindow(text) { // 현재 상태를 화면으로 볼 수 있도록 html로 전달하는 함수
     win.webContents.send("message", text);
@@ -63,7 +65,6 @@ autoUpdater.on("error", (err) => { // 업데이트 확인 중 에러 발생 시 
     writeMessageToWindow("에러 발생 : " + err);
 });
   
-
 autoUpdater.on("download-progress", (progressObj) => { // 업데이트 설치 파일 다운로드 상태 수신,  해당 단계까지 자동으로 진행 됨
     let progressMsg = "Downloaded " + progressObj.percent + "%"
     writeMessageToWindow(progressMsg);
@@ -250,7 +251,7 @@ ipcMain.on('chk_session', async (event) => { // win -> chk_session
 });
 
 function writeMessageChkChromeToWindow(data) { // 프로그램 로그를 화면으로 볼 수 있도록 html로 전달하는 함수
-    chk.webContents.send("message-chrome", data);
+    chk.webContents.send("message-chk1", data);
 }
 
 ipcMain.on('chk-chrome', async (event) => { // chk -> chk-chrome : 크롬 브라우저 설치 확인
@@ -263,8 +264,14 @@ ipcMain.on('chk-chrome', async (event) => { // chk -> chk-chrome : 크롬 브라
     try {
         writeMessageChkChromeToWindow({ text: '크롬 브라우저 설치 확인중...', result: false });
         page = await browser.newPage();
-        await waitForTimeout(3000);
-        writeMessageChkChromeToWindow({ text: '크롬 브라우저 설치 확인', result: true });
+        await waitForTimeout(2000);
+
+        const userAgent = await page.evaluate(() => {
+            const result = navigator.userAgent;
+            return result;
+        });
+
+        writeMessageChkChromeToWindow({ text: userAgent, result: true });
         
     } catch (error) {
         console.log(error);
@@ -272,6 +279,145 @@ ipcMain.on('chk-chrome', async (event) => { // chk -> chk-chrome : 크롬 브라
 
     } finally {
         await browser.close();
+    }
+});
+
+function writeMessageChkAuctionToWindow(data) { // 프로그램 로그를 화면으로 볼 수 있도록 html로 전달하는 함수
+    chk.webContents.send("message-chk2", data);
+}
+
+ipcMain.on('chk-auction', async (event) => { // chk -> chk-auction : 경매올리고 로그인 테스트
+    try {
+        const db = new Datastore({ 
+            filename: '../database.db', 
+            autoload: true,
+        });
+        const findOneAsync = promisify(db.findOne.bind(db));
+        const result = await findOneAsync({ _id: 'userInfo' });
+    
+        if (!result) {
+            await waitForTimeout(2000);
+            writeMessageChkAuctionToWindow({ text: '경매올리고 계정을 등록해야 합니다.', result: false });
+            return;
+        }
+    
+        // 등록계정의 유효성 검사
+        writeMessageChkAuctionToWindow({ text: '등록한 계정이 유효한지 확인중...', result: 33 });
+        const browser = await puppeteer.launch({ 
+            headless: false, //'new',
+            executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+        });
+        let page = null;
+
+        try {
+            page = await browser.newPage();
+            await page.setViewport({
+                width: 1280,
+                height: 720,
+                deviceScaleFactor: 1,
+            });
+            await page.goto('https://www.auctionup.co.kr/member/member01.php');
+            await new Promise((page) => setTimeout(page, 3000));
+
+            await page.type('#id', result.id);
+            await new Promise((page) => setTimeout(page, 1000));
+            await page.type('#passwd', result.pw);
+            await new Promise((page) => setTimeout(page, 1000));
+            await page.evaluate(() => {
+                document.querySelector('.sbtn01').click();
+            });
+            await new Promise((page) => setTimeout(page, 3000));
+
+            await page.goto('https://www.auctionup.co.kr/member/member01.php', {waitUntil: 'domcontentloaded'});
+            await new Promise((page) => setTimeout(page, 3000));
+
+            // smi_num02
+            const remain = await page.evaluate(() => {
+                return document.querySelector('.smi_num02').innerText;
+            });
+            writeMessageChkAuctionToWindow({ text: `계정이 유효합니다. (잔여 ${remain}일)`, result: 55 });
+
+        } catch (error) {
+            console.log(error);
+            writeMessageChkAuctionToWindow({ text: '유효성 검사중 오류, 계정 정보가 정확한지 확인하십시오.', result: 44 });
+
+        } finally {
+            await browser.close();
+        }
+
+    } catch (error) {
+        console.log(error);
+    }
+});
+
+ipcMain.on('set_auction', async (event, data) => { // chk -> set-auction : 경매올리고 계정 등록
+    try {
+        writeMessageChkAuctionToWindow({ text: '등록한 계정 검사중...', result: 11 });
+        const browser = await puppeteer.launch({ 
+            headless: false, //'new',
+            executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+        });
+        let page = null;
+        let isInsert = false;
+
+        try {
+            page = await browser.newPage();
+            await page.setViewport({
+                width: 1280,
+                height: 720,
+                deviceScaleFactor: 1,
+            });
+            await page.goto('https://www.auctionup.co.kr/member/member01.php', {waitUntil: 'domcontentloaded'});
+            await new Promise((page) => setTimeout(page, 2000));
+
+            await page.type('#id', data.id);
+            await new Promise((page) => setTimeout(page, 1000));
+            await page.type('#passwd', data.pw);
+            await new Promise((page) => setTimeout(page, 1000));
+            await page.evaluate(() => {
+                document.querySelector('.sbtn01').click();
+            });
+            await new Promise((page) => setTimeout(page, 3000));
+
+            await page.goto('https://www.auctionup.co.kr/member/member01.php', {waitUntil: 'domcontentloaded'});
+            await new Promise((page) => setTimeout(page, 2000));
+
+            // smi_num02
+            const remain = await page.evaluate(() => {
+                return document.querySelector('.smi_num02').innerText;
+            });
+            writeMessageChkAuctionToWindow({ text: `계정이 유효합니다. (잔여 ${remain}일)`, result: 55 });
+            isInsert = true;
+
+        } catch (error) {
+            console.log(error);
+            writeMessageChkAuctionToWindow({ text: '유효성 검사중 오류, 계정 정보가 정확한지 확인하십시오.', result: 44 });
+
+        } finally {
+            await browser.close();
+        }
+
+        if (isInsert) {
+            const db = new Datastore({ 
+                filename: '../database.db', 
+                autoload: true,
+            });
+            const doc = { // 저장할 파일
+                _id : 'userInfo',
+                id : data.id,
+                pw : data.pw,
+            };
+            db.insert(doc, async (err, newDoc) => {  // 데이터 저장
+                if(err !== null){
+                    console.log(err);
+                    return;
+                }
+                console.log(newDoc);
+            });
+        }
+        
+    } catch (error) {
+        console.log(error);
     }
 });
 
@@ -348,7 +494,7 @@ const awaitNaverLogin = async (page) => {
 const acutionLogin = async (page) => {
     try {
         await page.goto('https://www.auctionup.co.kr/member/member01.php');
-        await new Promise((page) => setTimeout(page, 3000));
+        // await new Promise((page) => setTimeout(page, 3000));
 
         await page.setViewport({
             width: 1280,
