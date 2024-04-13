@@ -232,7 +232,7 @@ const createChk = async () => { // 체크리스트 창 보이기
     chk = new BrowserWindow({
         parent: win,
         width: 640,
-        height: 480,
+        height: 720,
         webPreferences: { 
             nodeIntegration: true,
             contextIsolation: false,
@@ -316,7 +316,7 @@ ipcMain.on('chk-auction', async (event) => { // chk -> chk-auction : 경매올�
                 height: 720,
                 deviceScaleFactor: 1,
             });
-            await page.goto('https://www.auctionup.co.kr/member/member01.php');
+            await page.goto('https://www.auctionup.co.kr/member/member01.php', {waitUntil: 'domcontentloaded'});
             await new Promise((page) => setTimeout(page, 3000));
 
             await page.type('#id', result.id);
@@ -425,14 +425,14 @@ function writeMessageChkPathToWindow(data) { // 프로그램 로그를 화면으
     chk.webContents.send("message-chk3", data);
 }
 
-ipcMain.on('chk_path', async (event) => { // chk -> chk_path : 이미지 경로 설정 확인
+ipcMain.on('chk_path_start', async (event) => { // chk -> chk_path : 이미지 경로 설정 확인
     try {
         const db = new Datastore({ 
             filename: '../database.db', 
             autoload: true,
         });
         const findOneAsync = promisify(db.findOne.bind(db));
-        const result = await findOneAsync({ _id: 'path' });
+        const result = await findOneAsync({ _id: 'path_start' });
 
         if (!result) {
             writeMessageChkPathToWindow({ text: '이미지 폴더를 설정하지 않았습니다.', result: false });
@@ -447,7 +447,7 @@ ipcMain.on('chk_path', async (event) => { // chk -> chk_path : 이미지 경로 
     }
 });
 
-ipcMain.on('set_path', async (event) => { // chk -> set_path : 이미지 경로 설정
+ipcMain.on('set_path_start', async (event) => { // chk -> set_path_start : 블로그 시작 이미지 경로 설정
     try {
         const db = new Datastore({ 
             filename: '../database.db', 
@@ -458,7 +458,7 @@ ipcMain.on('set_path', async (event) => { // chk -> set_path : 이미지 경로 
             properties: ['openDirectory']
         }).then(async (result) => {
             console.log(result.filePaths); // 선택한 폴더의 경로 출력
-            const query = { _id: 'path' };
+            const query = { _id: 'path_start' };
 
             db.update(query, { $set: { path: result.filePaths[0] } }, { upsert : true }, (err, newDoc) => { // 문서 업데이트 시도, 없으면 새 레코드 추가
                 if (err) {
@@ -475,6 +475,119 @@ ipcMain.on('set_path', async (event) => { // chk -> set_path : 이미지 경로 
         }).catch(err => {
             console.log(err);
         });
+    
+    } catch (error) {
+        console.log(error);
+    }
+});
+
+function writeMessageChkPathToWindow2(data) { // 프로그램 로그를 화면으로 볼 수 있도록 html로 전달하는 함수
+    chk.webContents.send("message-chk4", data);
+}
+
+ipcMain.on('chk_path_end', async (event) => { // chk -> chk_path : 이미지 경로 설정 확인
+    try {
+        const db = new Datastore({ 
+            filename: '../database.db', 
+            autoload: true,
+        });
+        const findOneAsync = promisify(db.findOne.bind(db));
+        const result = await findOneAsync({ _id: 'path_end' });
+
+        if (!result) {
+            writeMessageChkPathToWindow2({ text: '이미지 폴더를 설정하지 않았습니다.', result: false });
+            return;
+
+        } else {
+            writeMessageChkPathToWindow2({ text: `폴더 위치: ${result.path}`, result: true });
+        }
+    
+    } catch (error) {
+        console.log(error);
+    }
+});
+
+ipcMain.on('set_path_end', async (event) => { // chk -> set_path_end : 블로그 시작 이미지 경로 설정
+    try {
+        const db = new Datastore({ 
+            filename: '../database.db', 
+            autoload: true,
+        });
+
+        dialog.showOpenDialog(win, {
+            properties: ['openDirectory']
+        }).then(async (result) => {
+            console.log(result.filePaths); // 선택한 폴더의 경로 출력
+            const query = { _id: 'path_end' };
+
+            db.update(query, { $set: { path: result.filePaths[0] } }, { upsert : true }, (err, newDoc) => { // 문서 업데이트 시도, 없으면 새 레코드 추가
+                if (err) {
+                    console.error('업데이트 중 오류 발생:', err);
+                    return;
+                }
+                console.log(`문서 업데이트 성공. 영향 받은 문서 수: ${newDoc}`);
+            });
+
+            const findOneAsync = promisify(db.findOne.bind(db));
+            const findResult = await findOneAsync({ _id: 'path' });
+            writeMessageChkPathToWindow2({ text: `폴더 위치: ${findResult.path}`, result: true });
+
+        }).catch(err => {
+            console.log(err);
+        });
+    
+    } catch (error) {
+        console.log(error);
+    }
+});
+
+function writeMessageChkPhoneWindow(data) { // 프로그램 로그를 화면으로 볼 수 있도록 html로 전달하는 함수
+    chk.webContents.send("message-chk5", data);
+}
+
+ipcMain.on('chk_phone', async (event, data) => { // chk -> set_phone : 전화번호 등록
+    try {
+        const db = new Datastore({ 
+            filename: '../database.db', 
+            autoload: true,
+        });
+        const findOneAsync = promisify(db.findOne.bind(db));
+        const result = await findOneAsync({ _id: 'phone' });
+
+        console.log(result);
+
+        if (!result) {
+            writeMessageChkPhoneWindow({ text: '전화번호를 등록하지 않았습니다.', result: false });
+            return;
+
+        } else {
+            writeMessageChkPhoneWindow({ text: `전화번호: ${result.phone}`, result: true });
+        }
+    
+    } catch (error) {
+        console.log(error);
+    }
+});
+
+ipcMain.on('set_phone', async (event, data) => { // chk -> set_phone : 전화번호 등록
+    try {
+        const db = new Datastore({ 
+            filename: '../database.db', 
+            autoload: true,
+        });
+
+        const query = { _id: 'phone' };
+        db.update(query, { $set: { phone: data.phone } }, { upsert : true }, (err, newDoc) => { // 문서 업데이트 시도, 없으면 새 레코드 추가
+            if (err) {
+                console.error('업데이트 중 오류 발생:', err);
+                return;
+            }
+            console.log(`문서 업데이트 성공. 영향 받은 문서 수: ${newDoc}`);
+        });
+
+        const findOneAsync = promisify(db.findOne.bind(db));
+        const findResult = await findOneAsync({ _id: 'phone' });
+        writeMessageChkPhoneWindow({ text: `전화번호: ${findResult.phone}`, result: true });
     
     } catch (error) {
         console.log(error);
