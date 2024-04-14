@@ -75,6 +75,12 @@
         /* ipcRenderer 를 직접 노출하는 경우, 비활성화 권장 */
         const { ipcRenderer } = require('electron');
 
+        let isChrome = false;
+        let isAuction = false;
+        let isPathStart = false;
+        let isPathEnd = false;
+        let isPhone = false;
+
         window.addEventListener('DOMContentLoaded', async () => {
 
             await waitForTimeout(2000);
@@ -109,6 +115,8 @@
 
                 let chk_1 = document.querySelector('.chk_1');
                 chk_1.classList.add('check');
+
+                isChrome = true;
             }
         });
 
@@ -141,6 +149,8 @@
                 
                 let chk_2 = document.querySelector('.chk_2');
                 chk_2.classList.add('check');
+
+                isAuction = true;
             } 
             else if (!data.result) { // false 응답이 올 경우 ID/PW 입력폼 보이기
                 let inputForm = document.querySelector('.login-form').style.display = 'block';
@@ -181,6 +191,8 @@
 
                 let chk_3 = document.querySelector('.chk_3');
                 chk_3.classList.add('check');
+
+                isPathStart = true;
             }
         });
 
@@ -207,6 +219,8 @@
 
                 let chk_4 = document.querySelector('.chk_4');
                 chk_4.classList.add('check');
+
+                isPathEnd = true;
             }
         });
 
@@ -224,6 +238,8 @@
 
                 let chk_5 = document.querySelector('.chk_5');
                 chk_5.classList.add('check');
+
+                isPhone = true;
             }
         });
 
@@ -273,7 +289,13 @@
         /* 프로그램 실행 관련 */
         document.getElementById('run_session').addEventListener('click', async () => { // 버튼에 클릭 이벤트 리스너 추가   
             try {
-                ipcRenderer.send('run_session'); // 메인 프로세스에 'run_session' 메시지 전송  
+                if (!(isChrome && isAuction && isPathStart && isPathEnd && isPhone)) {
+                    alert('확인이 끝날 때 까지 기다려 주십시오. 또는 크롬 브라우저 설치 여부나 기타 필요한 정보가 등록되었는지 확인하십시오.');
+                    return;
+                }
+
+                ipcRenderer.send('run_session'); // 메인 프로세스에 'run_session' 메시지 전송
+                
 
             } catch (error) {
                 console.log(error);

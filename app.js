@@ -554,8 +554,6 @@ ipcMain.on('chk_phone', async (event, data) => { // chk -> set_phone : 전화번
         const findOneAsync = promisify(db.findOne.bind(db));
         const result = await findOneAsync({ _id: 'phone' });
 
-        console.log(result);
-
         if (!result) {
             writeMessageChkPhoneWindow({ text: '전화번호를 등록하지 않았습니다.', result: false });
             return;
@@ -594,6 +592,27 @@ ipcMain.on('set_phone', async (event, data) => { // chk -> set_phone : 전화번
     }
 });
 
+/** 
+ * 자동화 프로세스
+ * 
+ * 1. 네이버 로그인 대기
+ * 2. 경매올리고 홈페이지 로그인
+ * 3. 경매올리고 관심물건 페이지 접속후 등록되어 있는 물건들 하나씩 블로그 포스팅 후 관심물건 해제
+ * 4. 관심물건 첫 번째 사건 주소밑에 생성된 버튼 순서대로 블로그 글쓰기 시작.
+ * 5. 제목 복사 후 블로그 제목에 붙여넣기
+ * 6. 대표이미지 복사후 블로그 제목란 위 사진에 업로드
+ * 7. 블로그 시작 폴더 이미지 순서대로 업로드
+ * 8. 본문2 복사후 블로그 내용에 붙여넣기
+ * 9. 본문2 블로그 에디터 인용구 입력
+ * 10. 빌드업 장소복사하여 에디터에 장소 추가
+ * 11. 본문3 복사후 블로그 내용에 붙여넣기
+ * 12. 빌드업 사진 주소 이용하여 사진 올리기
+ * 13. 본문4 복사후 내용 붙여넣기
+ * 14. 블로그 마무리 폴더 이미지 순서대로 업로드
+ * 15. 전화연결 링크
+ * 16. gpt api로 전체 내용을 정리
+ * 17. 발행시 특정 카테고리로 발행
+ */
 ipcMain.on('run_session', async (event) => { // chk -> run_session
 
     const browser = await puppeteer.launch({ 
@@ -608,16 +627,40 @@ ipcMain.on('run_session', async (event) => { // chk -> run_session
         page1 = await browser.newPage();
 
         // 1. 네이버 로그인 대기
-        const naverLogin = await awaitNaverLogin(page1);
+        const p1 = await awaitNaverLogin(page1);
 
-        if (!naverLogin) {
+        if (!p1) {
             return;
         }
         await waitForTimeout(3000);
 
         // 2. 경매올리고 로그인
         page2 = await browser.newPage();
-        const auctionLogin = await acutionLogin(page2);
+        const p2 = await auctionLogin(page2);
+
+        if (!p2) {
+            return;
+        }
+        await waitForTimeout(3000);
+
+        // 3. 경매올리고 관심물건 페이지
+        const p3 = await auctionUp(page2);
+
+        if (!p3) {
+            return;
+        }
+        await waitForTimeout(3000);
+
+        // 4. 
+        const p4 = await startEdit(page1);
+
+        if (!p4) {
+            return;
+        }
+        await waitForTimeout(3000);
+
+        // 7. 블로그 시작 폴더 이미지 업로드
+        const p7 = await startImgUpload(page1);
 
         // 세션 종료 메세지
         writeMessageRunToWindow('세션이 정상 종료되었습니다.');
@@ -630,7 +673,7 @@ ipcMain.on('run_session', async (event) => { // chk -> run_session
     }
 });
 
-/** 네이버 로그인 대기 */
+/** 1. 네이버 로그인 대기 */
 const awaitNaverLogin = async (page) => {
     try {
         await page.goto('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/');
@@ -663,11 +706,20 @@ const awaitNaverLogin = async (page) => {
     }
 }
 
-/** 경매올리고 로그인 */
-const acutionLogin = async (page) => {
+/** 2. 경매올리고 로그인 */
+const auctionLogin = async (page) => {
     try {
+        const db = new Datastore({ 
+            filename: '../database.db', 
+            autoload: true,
+        });
+        const findOneAsync = promisify(db.findOne.bind(db));
+        const result = await findOneAsync({ _id: 'userInfo' });
+
         await page.goto('https://www.auctionup.co.kr/member/member01.php');
-        // await new Promise((page) => setTimeout(page, 3000));
+
+        writeMessageRunToWindow('Step2. 경매올리고 로그인중...');
+        await new Promise((page) => setTimeout(page, 3000));
 
         await page.setViewport({
             width: 1280,
@@ -675,24 +727,110 @@ const acutionLogin = async (page) => {
             deviceScaleFactor: 1,
         });
 
-        // while (true) {
-        //     await new Promise((page) => setTimeout(page, 1000));
-        //     const e = await page.evaluate(() => {
-        //         const elem = document.querySelector('.switch_btn'); // 로그인 화면의 스위치 객체 존재여부를 파악하여 로그인 여부 판별
-        //         return elem;
-        //     });
-        //     if (e) {
-        //         writeMessageRunToWindow('Step1. 네이버 로그인을 진행해주세요.');
-        //     } else {
-        //         break;
-        //     }
-        // }
+        await page.type('#id', result.id);
+        await new Promise((page) => setTimeout(page, 1000));
+        await page.type('#passwd', result.pw);
+        await new Promise((page) => setTimeout(page, 1000));
+        await page.evaluate(() => {
+            document.querySelector('.sbtn01').click();
+        });
+        await new Promise((page) => setTimeout(page, 3000));
+
+        await page.goto('https://www.auctionup.co.kr/member/member01.php', {waitUntil: 'domcontentloaded'});
+        await new Promise((page) => setTimeout(page, 3000));
+
         return true;
 
     } catch (error) {
         console.log('awaitNaverLogin() -> error', error);
         writeMessageRunToWindow('Step2. 세션이 비정상적으로 종료되었습니다. 세션을 다시 실행해주세요. (사유: 경매올리고 로그인중 오류발생)');
         return false;
+    }
+}
+
+/** 3. 경매올리고 관심물건 페이지 */
+const auctionUp = async (page) => {
+    try {
+        await page.goto('https://www.auctionup.co.kr/mypage/mypage07.php#none');
+        await new Promise((page) => setTimeout(page, 3000));
+
+        await page.setViewport({
+            width: 1280,
+            height: 720,
+            deviceScaleFactor: 1,
+        });
+
+        const length = await page.evaluate(() => { // 관심물건 리스트 중 상단 클릭
+            const elems = document.querySelectorAll('#onuploadc');
+            return elems.length
+        });
+        writeMessageRunToWindow(`Step3. 관심물건 리스트에 ${length}개 상품이 대기중입니다.`);
+
+        if (length !== 0) { // 관심물건 리스트 중 최상단 클릭
+            await page.evaluate(() => {
+                const elems = document.querySelectorAll('#onuploadc');
+                elems[0].click();
+            });
+
+        } else { // 리스트가 없을 경우 세션을 종료한다.
+            return;
+        }
+        await new Promise((page) => setTimeout(page, 3000));
+
+        await page.evaluate(() => { // 업로드 확인 메세지 > 확인
+            document.querySelector(`.btn_info2`).click();
+        });
+        await new Promise((page) => setTimeout(page, 3000));
+
+        // const url = await page.evaluate(() => { // xml 링크를 추출하여 이동한다.
+        //     const btnxml = document.querySelector('.btnxml');
+        //     const onclickContent = btnxml.getAttribute('onclick');
+        //     const url = onclickContent.match(/window\.open\('([^']+)/)[1];
+
+        //     return url;
+        // });
+
+        // await page.goto(`https://www.auctionup.co.kr${url}`);
+        // await new Promise((page) => setTimeout(page, 3000));
+
+        return true;
+
+    } catch (error) {
+        console.log('awaitNaverLogin() -> error', error);
+        writeMessageRunToWindow('Step3. 세션이 비정상적으로 종료되었습니다. 세션을 다시 실행해주세요. (사유: 경매올리고 관심물건 페이지 작업중 오류)');
+        return false;
+    }
+}
+
+/** 4. 관심물건 첫 번째 사건 주소밑에 생성된 버튼 순서대로 블로그 글쓰기 시작.  */
+const startEdit = async (page) => {
+    try {
+        await page.bringToFront();
+        await page.goto('https://blog.naver.com/MyBlog.naver');
+        await new Promise((page) => setTimeout(page, 3000));
+
+        const currentUrl = await page.evaluate(() => window.location.href);
+
+        await page.goto(`${currentUrl}/postwrite`); // 글쓰기 페이지로 이동
+        await new Promise((page) => setTimeout(page, 3000));
+
+        return true;
+
+    } catch (error) {
+        console.log('startEdit() -> error', error);
+    }
+}
+
+/** 7. 블로그 시작 폴더 이미지 순서대로 업로드 */
+const startImgUpload = async (page) => {
+    try {
+        await page.evaluate(() => { // 숨겨진 input 요소의 스타일을 변경하여 활성화합니다.
+            document.querySelector('#hidden-file').style.display = 'block';
+        });
+        const inputUploadHandle = await page.$('#hidden-file');
+
+    } catch (error) {
+        console.log('startImgUpload() -> error', error);
     }
 }
 
