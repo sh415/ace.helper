@@ -4,6 +4,7 @@ const puppeteer = require('puppeteer');
 const {autoUpdater} = require("electron-updater");
 const Datastore = require('nedb');
 const { promisify } = require('util');
+const { PythonShell } = require('python-shell');
 
 /** 자동 업데이트 관련 */
 autoUpdater.autoInstallOnAppQuit = false; // 프로그램 종료시 업데이트 여부
@@ -824,10 +825,25 @@ const startEdit = async (page) => {
 /** 7. 블로그 시작 폴더 이미지 순서대로 업로드 */
 const startImgUpload = async (page) => {
     try {
-        await page.evaluate(() => { // 숨겨진 input 요소의 스타일을 변경하여 활성화합니다.
-            document.querySelector('#hidden-file').style.display = 'block';
+        // await page.evaluate(() => { // 숨겨진 input 요소의 스타일을 변경하여 활성화합니다.
+        //     document.querySelector('#hidden-file').style.display = 'block';
+        // });
+        // const inputUploadHandle = await page.$('#hidden-file');
+
+        let options = {
+            mode: 'text',  // 텍스트 기반 통신 (대안으로 'json', 'binary' 등이 있음)
+            pythonPath: 'resources/venv/Scripts/python',  // Python 인터프리터의 경로 (예: 가상환경)
+            pythonOptions: ['-u'],  // Python 인터프리터 옵션
+            scriptPath: 'resources/venv',  // Python 스크립트가 있는 디렉토리
+            args: ['value1', 'value2', 'value3']  // Python 스크립트로 전달할 인자
+        };
+
+        PythonShell.run('script.py', options, function (err, results) {
+            if (err) throw err;
+            // 'results'는 Python 스크립트의 출력을 담은 배열입니다
+            console.log('results', results);
         });
-        const inputUploadHandle = await page.$('#hidden-file');
+
 
     } catch (error) {
         console.log('startImgUpload() -> error', error);
