@@ -55,14 +55,30 @@
     <div id="message-chk4"></div>
 
     <!-- 5. 전화번호 등록 확인 -->
-    <div class="check-container">
+    <!-- <div class="check-container">
         <h5 class="chk_5">5. 전화번호 등록 확인</h5>
         <span class="checkmark_5">✔</span>
     </div>
     <div class="phone-input-container">
         <input type="tel" id="phone" placeholder="010-0000-0000">
         <button class="c-button" id="set_phone" disabled>변경</button>
-        <!-- <span id="phone-feedback"></span> -->
+    </div>
+    <div id="message-chk5"></div> -->
+
+    <div class="check-container">
+        <h5 class="chk_5">5. 네이버 ID/PW 등록 확인</h5>
+        <span class="checkmark_5">✔</span>
+    </div>
+    <div class="login-form-naver" style="display: none;">
+        <div class="input-group">
+            <label for="username">네이버 아이디</label>
+            <input type="text" id="username_n" name="username" required>
+        </div>
+        <div class="input-group">
+            <label for="password">네이버 비밀번호</label>
+            <input type="password" id="password_n" name="password" required>
+        </div>
+        <button class="n_button" id="set_naver">네이버 계정 설정</button>
     </div>
     <div id="message-chk5"></div>
     
@@ -79,11 +95,11 @@
         let isAuction = false;
         let isPathStart = false;
         let isPathEnd = false;
-        let isPhone = false;
+        let isNaver = false;
 
         window.addEventListener('DOMContentLoaded', async () => {
 
-            await waitForTimeout(2000);
+            await waitForTimeout(1000);
 
             // 1. 크롬 브라우저 설치 확인
             await chkChrome();
@@ -97,8 +113,11 @@
             // 4. 이미지 경로 확인
             await chkPathEnd();
 
-             // 3. 전화번호 등록 확인
-            await chkPhone();
+            // 5. 전화번호 등록 확인
+            // await chkPhone();
+
+            // 5. 네이버 계정 등록 등록 확인
+            await chkNaver();
         });
 
         /* 1. 크롬 브라우저 설치 관련 */
@@ -161,7 +180,7 @@
             try {
                 const id = document.querySelector('#username').value;
                 const pw = document.querySelector('#password').value;
-                ipcRenderer.send('set_auction', { id: id, pw:pw }); // 메인 프로세스에 'set_auction' 메시지 전송
+                ipcRenderer.send('set_auction', { id: id, pw: pw }); // 메인 프로세스에 'set_auction' 메시지 전송
 
             } catch (error) {
                 console.log(error);
@@ -225,8 +244,70 @@
         });
 
         /* 5. 전화번호 등록 관련 */
-        const chkPhone = () => {
-            ipcRenderer.send('chk_phone');
+        // const chkPhone = () => {
+        //     ipcRenderer.send('chk_phone');
+        // }
+
+        // ipcRenderer.on('message-chk5', function(event, data) {
+        //     let message = document.getElementById('message-chk5');
+        //     message.innerHTML = data.text;
+        //     if (data.result) {
+        //         let checkmark = document.querySelector('.checkmark_5');
+        //         checkmark.classList.add('visible');
+
+        //         let chk_5 = document.querySelector('.chk_5');
+        //         chk_5.classList.add('check');
+
+        //         isPhone = true;
+        //     }
+        // });
+
+        // document.getElementById('phone').addEventListener('input', function (event) {
+        //     let input = event.target.value.replace(/\D/g, '');
+        //     let formattedInput = '';
+            
+        //     // 숫자만 추출하여 형식에 맞게 포맷
+        //     if (input.length > 3) {
+        //         formattedInput += input.substr(0, 3) + '-';
+        //         if (input.length > 7) {
+        //             formattedInput += input.substr(3, 4) + '-';
+        //             formattedInput += input.substr(7);
+        //         } else {
+        //             formattedInput += input.substr(3);
+        //         }
+        //     } else {
+        //         formattedInput = input;
+        //     }
+            
+        //     event.target.value = formattedInput;
+
+        //     // 유효성 검사
+        //     let button = document.getElementById('set_phone');
+
+        //     if (formattedInput.match(/^\d{3}-\d{4}-\d{4}$/)) {
+        //         event.target.className = 'valid';
+        //         // document.getElementById('phone-feedback').textContent = '올바른 형식입니다!';
+        //         button.disabled = false;  // 버튼 활성화
+        //     } else {
+        //         event.target.className = 'invalid';
+        //         // document.getElementById('phone-feedback').textContent = '올바른 전화번호 형식을 입력해주세요.';
+        //         button.disabled = true;   // 버튼 비활성화
+        //     }
+        // });
+
+        // document.getElementById('set_phone').addEventListener('click', async () => { // 버튼에 클릭 이벤트 리스너 추가   
+        //     try {
+        //         const phone = document.querySelector('#phone').value;
+        //         ipcRenderer.send('set_phone', { phone: phone });
+
+        //     } catch (error) {
+        //         console.log(error);
+        //     }
+        // });
+
+        /* 6. 네이버 계정 등록관련 */
+        const chkNaver = () => {
+            ipcRenderer.send('chk_naver');
         }
 
         ipcRenderer.on('message-chk5', function(event, data) {
@@ -239,47 +320,18 @@
                 let chk_5 = document.querySelector('.chk_5');
                 chk_5.classList.add('check');
 
-                isPhone = true;
+                isNaver = true;
+            } 
+            else {
+                let inputForm = document.querySelector('.login-form-naver').style.display = 'block';
             }
         });
 
-        document.getElementById('phone').addEventListener('input', function (event) {
-            let input = event.target.value.replace(/\D/g, '');
-            let formattedInput = '';
-            
-            // 숫자만 추출하여 형식에 맞게 포맷
-            if (input.length > 3) {
-                formattedInput += input.substr(0, 3) + '-';
-                if (input.length > 7) {
-                    formattedInput += input.substr(3, 4) + '-';
-                    formattedInput += input.substr(7);
-                } else {
-                    formattedInput += input.substr(3);
-                }
-            } else {
-                formattedInput = input;
-            }
-            
-            event.target.value = formattedInput;
-
-            // 유효성 검사
-            let button = document.getElementById('set_phone');
-
-            if (formattedInput.match(/^\d{3}-\d{4}-\d{4}$/)) {
-                event.target.className = 'valid';
-                // document.getElementById('phone-feedback').textContent = '올바른 형식입니다!';
-                button.disabled = false;  // 버튼 활성화
-            } else {
-                event.target.className = 'invalid';
-                // document.getElementById('phone-feedback').textContent = '올바른 전화번호 형식을 입력해주세요.';
-                button.disabled = true;   // 버튼 비활성화
-            }
-        });
-
-        document.getElementById('set_phone').addEventListener('click', async () => { // 버튼에 클릭 이벤트 리스너 추가   
+        document.getElementById('set_naver').addEventListener('click', async () => { // 버튼에 클릭 이벤트 리스너 추가   
             try {
-                const phone = document.querySelector('#phone').value;
-                ipcRenderer.send('set_phone', { phone: phone });
+                const id = document.querySelector('#username_n').value;
+                const pw = document.querySelector('#password_n').value;
+                ipcRenderer.send('set_naver', { id: id, pw: pw }); // 메인 프로세스에 'set_naver' 메시지 전송
 
             } catch (error) {
                 console.log(error);
@@ -289,10 +341,10 @@
         /* 프로그램 실행 관련 */
         document.getElementById('run_session').addEventListener('click', async () => { // 버튼에 클릭 이벤트 리스너 추가   
             try {
-                if (!(isChrome && isAuction && isPathStart && isPathEnd && isPhone)) {
-                    alert('확인이 끝날 때 까지 기다려 주십시오. 또는 크롬 브라우저 설치 여부나 기타 필요한 정보가 등록되었는지 확인하십시오.');
-                    return;
-                }
+                // if (!(isChrome && isAuction && isPathStart && isPathEnd && isPhone)) {
+                //     alert('확인이 끝날 때 까지 기다려 주십시오. 또는 크롬 브라우저 설치 여부나 기타 필요한 정보가 등록되었는지 확인하십시오.');
+                //     return;
+                // }
 
                 ipcRenderer.send('run_session'); // 메인 프로세스에 'run_session' 메시지 전송
                 
@@ -583,6 +635,20 @@
         background-color: #e9ecef;
         border-radius: 8px;
         font-size: 12px;
+    }
+
+    .n_button {
+        width: 320px;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        background-color: #38db02;
+        color: white;
+        cursor: pointer;
+    }
+
+    .n_button:hover {
+        background-color: #2db400;
     }
 
     .phone-input-container {
