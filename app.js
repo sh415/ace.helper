@@ -558,7 +558,7 @@ ipcMain.on('run_session', async (event) => { // chk -> run_session
             await waitForTimeout(1000);
 
             // 경매올리고에서 관심물건 해지
-
+            await deleteAuction()
             count ++;
         }
         writeMessageRunToWindow('세션이 정상 종료되었습니다.');
@@ -574,10 +574,18 @@ ipcMain.on('run_session', async (event) => { // chk -> run_session
 
 const checkAuction = async() => { // 경매올리고 관심물건 개수 체크
     writeMessageRunToWindow('경매올리고 관심물건 확인중...');
+
+    const db = new Datastore({ 
+        filename: '../database.db', 
+        autoload: true,
+    });
+    const findOneAsync = promisify(db.findOne.bind(db));
+    const result = await findOneAsync({ _id: 'userInfo' });
+
     let count = 0;
 
     const browser = await puppeteer.launch({ 
-        headless: 'new',
+        headless: false,
         executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
     });
     let page = null;
@@ -620,6 +628,19 @@ const checkAuction = async() => { // 경매올리고 관심물건 개수 체크
 
 const deleteAuction = async() => { // 경매올리고 관심물건 해지
     writeMessageRunToWindow('경매올리고 관심물건 해지중...');
+
+    const db = new Datastore({ 
+        filename: '../database.db', 
+        autoload: true,
+    });
+    const findOneAsync = promisify(db.findOne.bind(db));
+    const result = await findOneAsync({ _id: 'userInfo' });
+
+    const browser = await puppeteer.launch({ 
+        headless: false,
+        executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+    });
+    let page = null;
 
     try {
         page = await browser.newPage();
