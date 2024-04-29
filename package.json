@@ -1,6 +1,6 @@
 {
   "name": "ace.helper",
-  "version": "1.0.21",
+  "version": "1.0.24",
   "description": "",
   "main": "app.js",
   "repository": {
@@ -16,10 +16,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "electron-updater": "^6.1.8",
-    "nedb": "^1.8.0",
-    "puppeteer": "^22.6.0",
-    "python-shell": "^5.0.0"
+    "electron-updater": "^6.1.8"
   },
   "devDependencies": {
     "electron": "^29.1.5",
@@ -28,8 +25,8 @@
   "build": {
     "extraResources": [
       {
-        "from": "../venv",
-        "to": "venv",
+        "from": "../program",
+        "to": "program",
         "filter": [
           "**/*"
         ]

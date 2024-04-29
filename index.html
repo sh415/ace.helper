@@ -8,7 +8,7 @@
     <!-- <webview id="webview" src="http://www.google.com/" style="width:1280; height:720"></webview> -->
 
     <!-- 자동 업데이트 관련 -->
-    <h1>Latest version update.</h1>
+    <h3>신규 업데이트 확인</h3>
     <div class="flex-container">
         <div>현재 버전 :</div>
         <div id="version">v0.0.0</div>
@@ -16,10 +16,10 @@
     
     <div id="message"></div>
 
-    <h4>Run this session.</h4>
-    <div id="message-run"></div>
-    <button id="chk_session">자동화 세션 실행</button>
-
+    <div class="footer">
+        <button id="run_session">프로그램 실행</button>
+    </div>
+    
     <script>
         /* ipcRenderer 를 직접 노출하는 경우, 비활성화 권장 */
         const { ipcRenderer } = require('electron');
@@ -35,31 +35,19 @@
         });
 
         /* 프로그램 실행 관련 */
-        document.getElementById('chk_session').addEventListener('click', async () => { // 버튼에 클릭 이벤트 리스너 추가   
+        document.getElementById('run_session').addEventListener('click', async () => { // 버튼에 클릭 이벤트 리스너 추가   
             try {
-                ipcRenderer.send('chk_session'); // 메인 프로세스에 'chk_session' 메시지 전송  
+                ipcRenderer.send('run_session'); // 메인 프로세스에 'run_session' 메시지 전송  
 
             } catch (error) {
                 console.log(error);
             }
-
-            // const webview = document.getElementById('webview');
-            // webview.loadURL('https://www.naver.com/');
-            // await waitForTimeout(3000);
-
-            // webview.executeJavaScript('document.querySelector(`.MyView-module__link_login___HpHMW`).click()');
-            // await waitForTimeout(3000);
         });
 
         /* preload.js 를 통해  Electron API 안전하게 사용 */
         // document.getElementById('openGoogle').addEventListener('click', () => {
         //     window.electronAPI.openGoogle();
         // });
-
-        ipcRenderer.on('message-run', function(event, text) {
-            var message = document.getElementById('message-run');
-            message.innerHTML = text;
-        });
 
         const waitForTimeout = (ms) => {
             return new Promise(resolve => setTimeout(resolve, ms));
@@ -109,7 +97,14 @@
     
     h1 {
         color: #3b4657;
-        font-size: 24px;
+    }
+
+    h2 {
+        color: #3b4657;
+    }
+
+    h3 {
+        color: #3b4657;
     }
 
     h4 {
@@ -142,6 +137,11 @@
         border-radius: 8px;
         font-size: 12px;
     }
+
+    .footer {
+        margin-top: 40px;
+    }
+
 
 </style>
 </html>
