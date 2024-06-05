@@ -1,10 +1,12 @@
-const { app, dialog, BrowserWindow, ipcMain } = require('electron')
+const { 
+    app, dialog, BrowserWindow, ipcMain, Tray, Menu } = require('electron')
 const path = require('path')
 const {autoUpdater} = require("electron-updater");
 
 /** 자동 업데이트 관련 */
 autoUpdater.autoInstallOnAppQuit = false; // 프로그램 종료시 업데이트 여부
 let win; // 메인 창
+let tray = null; // 트레이
 
 function writeMessageToWindow(text) { // 현재 상태를 화면으로 볼 수 있도록 html로 전달하는 함수
     win.webContents.send("message", text);
@@ -35,6 +37,7 @@ function createWindow () {
           contextIsolation: false,
           // webviewTag:true,
         },
+        icon: path.join(__dirname, 'gui/icon.png')
     });
 
     // win.webContents.openDevTools(); // 개발자 모드 활성화
@@ -92,6 +95,31 @@ autoUpdater.on("update-downloaded", (info) => { // 업데이트 설치 파일 �
 
 app.on('ready', () => {
     createWindow();
+
+    tray = new Tray(path.join(__dirname, 'gui/icon.png')); // 아이콘 경로 설정
+    const contextMenu = Menu.buildFromTemplate([
+        {
+          label: 'Show App', click: () => {
+            win.show();
+          }
+        },
+        {
+          label: 'Quit', click: () => {
+            app.quit();
+          }
+        }
+      ]);
+      tray.setToolTip('This is my application.');
+      tray.setContextMenu(contextMenu);
+    
+      tray.on('click', () => {
+        win.isVisible() ? win.hide() : win.show();
+      });
+    
+      win.on('minimize', (event) => {
+        event.preventDefault();
+        win.hide();
+      });
 
     autoUpdater.checkForUpdates(); // 자동 업데이트 체크
 });
