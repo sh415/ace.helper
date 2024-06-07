@@ -16,13 +16,94 @@
     
     <div id="message"></div>
 
-    <div class="footer">
+    <div class="basicInfoWrap">
+
+        <div class="input-container">
+            <div class="input-label">발행/저장 여부<span class="required"> *</span></div>
+            <div class="dropdown-container">
+                <select id="dropdown" class="dropdown">
+                    <option value="post">발행</option>
+                    <option value="save">저장</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <div class="input-label">블로그 시작 폴더 설정<span class="required"> *</span></div>
+            <input type="text" id="path_start" />
+        </div>
+
+        <div class="input-container">
+            <div class="input-label">블로그 마무리 폴더 설정<span class="required"> *</span></div>
+            <input type="text" id="path_end" />
+        </div>
+
+        <div class="input-container">
+            <div class="input-label">옥션 아이디<span class="required"> *</span></div>
+            <input type="text" id="auction_id" />
+        </div>
+
+        <div class="input-container">
+            <div class="input-label">옥션 비밀번호<span class="required"> *</span></div>
+            <input type="text" id="auction_pw" />
+        </div>
+
+        <div class="input-container">
+            <div class="input-label">네이버 아이디<span class="required"> *</span></div>
+            <input type="text" id="naver_id" />
+        </div>
+
+        <div class="input-container">
+            <div class="input-label">네이버 비밀번호<span class="required"> *</span></div>
+            <input type="text" id="naver_pw" />
+        </div>
+
+        <div class="input-container">
+            <div class="input-label">OPENAI_API_KEY<span class="required"> *</span></div>
+            <input type="text" id="api_key" />
+        </div>
+
+        <div class="input-container">
+            <div class="input-label">AI 질문1<span class="required"> *</span></div>
+            <input type="text" id="question1" />
+        </div>
+
+        <div class="input-container">
+            <div class="input-label">AI 질문2<span class="required"> *</span></div>
+            <input type="text" id="question2" />
+        </div>
+        
+    </div>
+
+    <div>
+        <!-- <button id="resource_download">리소스 다운로드</button> -->
         <button id="run_session">프로그램 실행</button>
     </div>
     
     <script>
         /* ipcRenderer 를 직접 노출하는 경우, 비활성화 권장 */
         const { ipcRenderer } = require('electron');
+
+        // 프로그램 시작 시 설정값 불러오기
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const settings = await ipcRenderer.invoke('get-settings');
+                document.getElementById('dropdown').value = settings.method;
+                document.getElementById('path_start').value = settings.path_start;
+                document.getElementById('path_end').value = settings.path_end;
+                document.getElementById('auction_id').value = settings.auction_id;
+                document.getElementById('auction_pw').value = settings.auction_pw;
+                document.getElementById('naver_id').value = settings.naver_id;
+                document.getElementById('naver_pw').value = settings.naver_pw;
+                document.getElementById('api_key').value = settings.api_key;
+                document.getElementById('question1').value = settings.question1;
+                document.getElementById('question2').value = settings.question2;
+
+            } catch (err) {
+                console.error(err.message);
+            }
+        });
+
 
         /* 자동 업데이트 관련 */
         let version = window.location.hash.substring(1);
@@ -34,10 +115,135 @@
             message.innerHTML = text;
         });
 
+
+        /* 리소스 다운로드 관련 */
+        // document.getElementById('resource_download').addEventListener('click', async () => { // 버튼에 클릭 이벤트 리스너 추가   
+        //     try {
+        //         ipcRenderer.send('resource_download'); // 메인 프로세스에 'resource_download' 메시지 전송  
+
+        //     } catch (error) {
+        //         console.log(error);
+        //     }
+        // });
+
+
+        /* 설정값 관련 */
+
+        // 0. 드롭다운의 변경 이벤트를 처리합니다.
+        document.getElementById('dropdown').addEventListener('change', function() {
+            // 선택된 값 가져오기
+            const selectedValue = dropdown.value;
+            ipcRenderer.send('method', selectedValue);
+        });
+
+        // 1. 블로그 시작 폴더 설정
+        document.getElementById('path_start').addEventListener('click', () => {
+            ipcRenderer.send('open-dialog-start');
+        });
+
+        ipcRenderer.on('start-directory', (event, path) => {
+            document.getElementById('path_start').value = path;
+        });
+
+        // 2. 블로그 마무리 폴더 설정
+        document.getElementById('path_end').addEventListener('click', () => {
+            ipcRenderer.send('open-dialog-end');
+        });
+
+        ipcRenderer.on('end-directory', (event, path) => {
+            document.getElementById('path_end').value = path;
+        });
+
+        // 3. 옥션 아이디 설정
+        document.getElementById('auction_id').addEventListener('blur', () => {
+            let auctionId = document.getElementById('auction_id').value;
+            ipcRenderer.send('auction-id-update', auctionId.trim());
+        });
+
+        ipcRenderer.on('auction-id-data', (event, data) => {
+            document.getElementById('auction_id').value = data;
+        });
+
+        // 4. 옥션 비밀번호 설정
+        document.getElementById('auction_pw').addEventListener('blur', () => {
+            let auctionPw = document.getElementById('auction_pw').value;
+            ipcRenderer.send('auction-pw-update', auctionPw.trim());
+        });
+
+        ipcRenderer.on('auction-pw-data', (event, data) => {
+            document.getElementById('auction_pw').value = data;
+        });
+
+        // 5. 네이버 아이디 설정
+        document.getElementById('naver_id').addEventListener('blur', () => {
+            let naverId = document.getElementById('naver_id').value;
+            ipcRenderer.send('naver-id-update', naverId.trim());
+        });
+
+        ipcRenderer.on('naver-id-data', (event, data) => {
+            document.getElementById('naver_id').value = data;
+        });
+
+        // 6. 네이버 비밀번호 설정
+        document.getElementById('naver_pw').addEventListener('blur', () => {
+            let naverPw = document.getElementById('naver_pw').value;
+            ipcRenderer.send('naver-pw-update', naverPw.trim());
+        });
+
+        ipcRenderer.on('naver-pw-data', (event, data) => {
+            document.getElementById('naver_pw').value = data;
+        });
+
+        // 7. API 설정
+        document.getElementById('api_key').addEventListener('blur', () => {
+            let apiKey = document.getElementById('api_key').value;
+            ipcRenderer.send('api-key-update', apiKey.trim());
+        });
+
+        ipcRenderer.on('api-key-data', (event, data) => {
+            document.getElementById('api_key').value = data;
+        });
+
+        // 7. AI 질문1 설정
+        document.getElementById('question1').addEventListener('blur', () => {
+            let question = document.getElementById('question1').value;
+            ipcRenderer.send('question1-update', question);
+        });
+
+        ipcRenderer.on('question1-data', (event, data) => {
+            document.getElementById('question1').value = data;
+        });
+
+        // 7. AI 질문2 설정
+        document.getElementById('question2').addEventListener('blur', () => {
+            let question = document.getElementById('question2').value;
+            ipcRenderer.send('question2-update', question);
+        });
+
+        ipcRenderer.on('question2-data', (event, data) => {
+            document.getElementById('question2').value = data;
+        });
+
+
         /* 프로그램 실행 관련 */
         document.getElementById('run_session').addEventListener('click', async () => { // 버튼에 클릭 이벤트 리스너 추가   
             try {
-                ipcRenderer.send('run_session'); // 메인 프로세스에 'run_session' 메시지 전송  
+                let con1 = document.getElementById('path_start').value.trim();
+                let con2 = document.getElementById('path_end').value.trim();
+                let con3 = document.getElementById('auction_id').value.trim();
+                let con4 = document.getElementById('auction_pw').value.trim();
+                let con5 = document.getElementById('naver_id').value.trim();
+                let con6 = document.getElementById('naver_pw').value.trim();
+                let con7 = document.getElementById('api_key').value.trim();
+                let con8 = document.getElementById('question1').value.trim();
+                let con9 = document.getElementById('question2').value.trim();
+
+                if (con1 && con2 && con3 && con4 && con5 && con6 && con7 && con8 && con9) {
+                    ipcRenderer.send('run_session'); // 메인 프로세스에 'run_session' 메시지 전송  
+
+                } else {
+                    
+                }
 
             } catch (error) {
                 console.log(error);
@@ -55,7 +261,7 @@
 
     </script>
 </body>
-<style>
+<style lang="scss" scoped>
 
     /* webview {
         display:inline-flex;
@@ -87,7 +293,7 @@
         font-size: 14px;
         margin: 4px 2px;
         cursor: pointer;
-        border-radius: 8px;
+        border-radius: 20px;
         transition: background-color 0.3s;
     }
 
@@ -142,6 +348,85 @@
         margin-top: 40px;
     }
 
+    ul {
+        list-style:none;
+        padding-left:0px;
+    }
+
+    /* 커스텀 ui */
+    .basicInfoWrap {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    .input-container {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .input-label {
+        display: flex;
+        align-items: center;
+        font-size: 13px;
+        padding-right: 10px;
+        padding-bottom: 2px;
+    }
+
+    .input-container label {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .input-container input {
+        width: 67%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        transition: border-color 0.3s ease;
+    }
+
+    .input-container input:focus {
+        border-color: #007bff; /* Change border color on focus */
+    }
+
+    .input-container input.invalid {
+        border-color: #dc3545; /* Change border color for invalid input */
+    }
+
+    .required {
+        color: #dc3545; /* Color for required indicator */
+        font-size: 90%;
+    }
+
+    .dropdown-container {
+        position: relative;
+    }
+
+    .dropdown {
+        width: 20%;
+        padding: 10px;
+        font-size: 13px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        appearance: none;
+        background-color: #fff;
+        background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="5"><path fill="none" stroke="%23333" stroke-width="2" d="M1 1l4 3 4-3"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 10px 5px;
+        cursor: pointer;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .dropdown:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+        outline: none;
+    }
+
+    .dropdown option {
+        padding: 10px;
+    }
 
 </style>
 </html>
