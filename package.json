@@ -1,6 +1,6 @@
 {
   "name": "ace.helper",
-  "version": "1.0.31",
+  "version": "1.0.37",
   "description": "",
   "main": "app.js",
   "repository": {
@@ -27,8 +27,8 @@
   "build": {
     "extraResources": [
       {
-        "from": "../gui",
-        "to": "gui",
+        "from": "./src",
+        "to": "",
         "filter": [
           "**/*"
         ]

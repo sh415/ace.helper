@@ -1,11 +1,11 @@
-const { 
+const {
   app, dialog, ipcMain
   , BrowserWindow
   , Tray, Menu
 } = require('electron')
 
 const path = require('path')
-const {autoUpdater} = require("electron-updater");
+const { autoUpdater } = require("electron-updater");
 const { execFile } = require('child_process');
 const sqlite = require('sqlite');
 const sqlite3 = require('sqlite3');
@@ -19,7 +19,7 @@ function writeMessageToWindow(text) { // 현재 상태를 화면으로 볼 수 �
   win.webContents.send("message", text);
 }
 
-function createWindow () {
+function createWindow() {
 
   /** 기존 코드 */
   // const win = new BrowserWindow({
@@ -39,12 +39,12 @@ function createWindow () {
   win = new BrowserWindow({
     width: 640,
     height: 780,
-    webPreferences: { 
+    webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
       // webviewTag:true,
     },
-    icon: path.join(__dirname, 'gui/icon.png')
+    icon: path.join(__dirname, 'resources/icon.png')
   });
 
   win.setMenu(null);
@@ -65,7 +65,7 @@ async function setupDatabase() { // 데이터베이스 설정
 
   // SQLite3 데이터베이스 연결
   const db = await sqlite.open({
-    filename: 'C:/Ace Auction/database.db',
+    filename: path.join(__dirname, 'resources/exec_program/database.db'),
     driver: sqlite3.Database
   });
 
@@ -83,6 +83,7 @@ async function setupDatabase() { // 데이터베이스 설정
         naver_pw TEXT,
         api_key TEXT,
         question1 TEXT,
+        question1_plus TEXT,
         question2 TEXT,
         method TEXT
     )`);
@@ -92,7 +93,7 @@ async function setupDatabase() { // 데이터베이스 설정
     const rowCount = await db.get(`SELECT COUNT(*) as count FROM t_settings`);
     if (rowCount.count === 0) {
       // 데이터 삽입
-      await db.run(`INSERT INTO t_settings (path_start, path_end, auction_id, auction_pw, naver_id, naver_pw, api_key, question1, question2, method) VALUES ('', '', '', '', '', '', '', '', '', 'post')`);
+      await db.run(`INSERT INTO t_settings (path_start, path_end, auction_id, auction_pw, naver_id, naver_pw, api_key, question1, question1_plus, question2, method) VALUES ('', '', '', '', '', '', '', '', '', '', 'post')`);
       console.log('Initial data inserted.');
     } else {
       console.log('Table already contains data. No insertion needed.');
@@ -107,9 +108,9 @@ async function setupDatabase() { // 데이터베이스 설정
   }
 }
 
-async function getSettings () { // 설정값 불러오기
+async function getSettings() { // 설정값 불러오기
   const db = await sqlite.open({
-    filename: 'C:/Ace Auction/database.db',
+    filename: path.join(__dirname, 'resources/exec_program/database.db'),
     driver: sqlite3.Database
   });
 
@@ -130,24 +131,24 @@ async function getSettings () { // 설정값 불러오기
 autoUpdater.on("checking-for-update", () => { // 신규 버전 릴리즈 확인 시 호출 됨
   writeMessageToWindow("업데이트 확인 중...");
 });
-  
+
 autoUpdater.on("update-available", () => {  // 업데이트 할 신규 버전이 있을 시 호출 됨
   writeMessageToWindow("신규 버전 확인 및 업데이트 가능.");
 });
-  
+
 autoUpdater.on("update-not-available", () => { // 업데이트 할 신규 버전이 없을 시 호출 됨
   writeMessageToWindow("신규 버전 없음.");
 });
-  
+
 autoUpdater.on("error", (err) => { // 업데이트 확인 중 에러 발생 시 호출 됨
   writeMessageToWindow("에러 발생 : " + err);
 });
-  
+
 autoUpdater.on("download-progress", (progressObj) => { // 업데이트 설치 파일 다운로드 상태 수신,  해당 단계까지 자동으로 진행 됨
   let progressMsg = "Downloaded " + Math.round(progressObj.percent) + "%"
   writeMessageToWindow(progressMsg);
 });
-  
+
 autoUpdater.on("update-downloaded", (info) => { // 업데이트 설치 파일 다운로드 완료 시 업데이트 진행 여부 선택
   writeMessageToWindow("신규 버전 설치 파일 다운로드 완료.");
 
@@ -158,16 +159,16 @@ autoUpdater.on("update-downloaded", (info) => { // 업데이트 설치 파일 �
     title: "UPDATER",
     message: "프로그램 업데이트를 진행하시겠습니까?",
   };
-  
-  dialog.showMessageBox(win, option).then(function(res){
+
+  dialog.showMessageBox(win, option).then(function (res) {
     writeMessageToWindow(res.response.toString());
-    
+
     // 위에 option.buttons의 Index = res.response
-    if(res.response == 0){
+    if (res.response == 0) {
       writeMessageToWindow('프로그램 종료 및 업데이트');
       autoUpdater.quitAndInstall();
     }
-    else{
+    else {
       writeMessageToWindow('프로그램 업데이트 안함');
     }
   });
@@ -210,48 +211,11 @@ app.on('window-all-closed', () => {
 })
 
 
-/** 리소스 다운로드 관련 */
-// ipcMain.on('resource_download', async (event) => { // win -> run_session
-//   const url = 'https://storage.googleapis.com/my-bucket/path/to/your/file.zip'; // Google Cloud Storage 활용
-//   const downloadPath = path.join(os.tmpdir(), 'file.zip');
-//   const extractPath = path.join('C:', 'Program Files (x86)', 'gui');
-
-//   try {
-//     const res = await fetch(url);
-//     if (!res.ok) throw new Error(`Failed to download file: ${res.statusText}`);
-
-//     const fileStream = fs.createWriteStream(downloadPath);
-//     await new Promise((resolve, reject) => {
-//       res.body.pipe(fileStream);
-//       res.body.on('error', reject);
-//       fileStream.on('finish', resolve);
-//     });
-
-//     await unzipFile(downloadPath, extractPath);
-//   } catch (error) {
-//     console.error('Error downloading or extracting ZIP file:', error);
-//   }
-// });
-
-// function unzipFile(zipPath, extractPath) {
-//   return new Promise((resolve, reject) => {
-//     const zip = new AdmZip(zipPath);
-//     zip.extractAllToAsync(extractPath, true, (err) => {
-//       if (err) {
-//         reject(err);
-//       } else {
-//         resolve();
-//       }
-//     });
-//   });
-// }
-
-
 /** 설정값 관련 */
 // 0. 발행/저장 여부 설정
 ipcMain.on('method', async (event, method) => {
   const db = await sqlite.open({
-    filename: 'C:/Ace Auction/database.db',
+    filename: path.join(__dirname, 'resources/exec_program/database.db'),
     driver: sqlite3.Database
   });
 
@@ -272,11 +236,11 @@ ipcMain.on('open-dialog-start', (event) => {
   dialog.showOpenDialog(win, {
     properties: ['openDirectory']
   }).then(result => {
-      if (!result.canceled) {
-        const selectedPath = result.filePaths[0];
-        updateStartPath(selectedPath); // 데이터베이스에 선택한 디렉토리 경로 저장
-        event.sender.send('start-directory', selectedPath);
-      }
+    if (!result.canceled) {
+      const selectedPath = result.filePaths[0];
+      updateStartPath(selectedPath); // 데이터베이스에 선택한 디렉토리 경로 저장
+      event.sender.send('start-directory', selectedPath);
+    }
   }).catch(err => {
     console.error(err);
   });
@@ -284,7 +248,7 @@ ipcMain.on('open-dialog-start', (event) => {
 
 async function updateStartPath(path) {
   const db = await sqlite.open({
-    filename: 'C:/Ace Auction/database.db',
+    filename: path.join(__dirname, 'resources/exec_program/database.db'),
     driver: sqlite3.Database
   });
 
@@ -304,11 +268,11 @@ ipcMain.on('open-dialog-end', (event) => {
   dialog.showOpenDialog(win, {
     properties: ['openDirectory']
   }).then(result => {
-      if (!result.canceled) {
-        const selectedPath = result.filePaths[0];
-        updateEndPath(selectedPath); // 데이터베이스에 선택한 디렉토리 경로 저장
-        event.sender.send('end-directory', selectedPath);
-      }
+    if (!result.canceled) {
+      const selectedPath = result.filePaths[0];
+      updateEndPath(selectedPath); // 데이터베이스에 선택한 디렉토리 경로 저장
+      event.sender.send('end-directory', selectedPath);
+    }
   }).catch(err => {
     console.error(err);
   });
@@ -316,7 +280,7 @@ ipcMain.on('open-dialog-end', (event) => {
 
 async function updateEndPath(path) {
   const db = await sqlite.open({
-    filename: 'C:/Ace Auction/database.db',
+    filename: path.join(__dirname, 'resources/exec_program/database.db'),
     driver: sqlite3.Database
   });
 
@@ -334,7 +298,7 @@ async function updateEndPath(path) {
 // 3. 옥션 아이디 설정
 ipcMain.on('auction-id-update', async (event, auctionId) => {
   const db = await sqlite.open({
-    filename: 'C:/Ace Auction/database.db',
+    filename: path.join(__dirname, 'resources/exec_program/database.db'),
     driver: sqlite3.Database
   });
 
@@ -353,7 +317,7 @@ ipcMain.on('auction-id-update', async (event, auctionId) => {
 // 4. 옥션 비밀번호 설정
 ipcMain.on('auction-pw-update', async (event, auctionPw) => {
   const db = await sqlite.open({
-    filename: 'C:/Ace Auction/database.db',
+    filename: path.join(__dirname, 'resources/exec_program/database.db'),
     driver: sqlite3.Database
   });
 
@@ -372,7 +336,7 @@ ipcMain.on('auction-pw-update', async (event, auctionPw) => {
 // 5. 네이버 아이디 설정
 ipcMain.on('naver-id-update', async (event, naverId) => {
   const db = await sqlite.open({
-    filename: 'C:/Ace Auction/database.db',
+    filename: path.join(__dirname, 'resources/exec_program/database.db'),
     driver: sqlite3.Database
   });
 
@@ -391,7 +355,7 @@ ipcMain.on('naver-id-update', async (event, naverId) => {
 // 6. 네이버 비밀번호 설정
 ipcMain.on('naver-pw-update', async (event, naverPw) => {
   const db = await sqlite.open({
-    filename: 'C:/Ace Auction/database.db',
+    filename: path.join(__dirname, 'resources/exec_program/database.db'),
     driver: sqlite3.Database
   });
 
@@ -410,7 +374,7 @@ ipcMain.on('naver-pw-update', async (event, naverPw) => {
 // 7. API 설정
 ipcMain.on('api-key-update', async (event, apiKey) => {
   const db = await sqlite.open({
-    filename: 'C:/Ace Auction/database.db',
+    filename: path.join(__dirname, 'resources/exec_program/database.db'),
     driver: sqlite3.Database
   });
 
@@ -429,7 +393,7 @@ ipcMain.on('api-key-update', async (event, apiKey) => {
 // 8. AI 질문1 설정
 ipcMain.on('question1-update', async (event, question) => {
   const db = await sqlite.open({
-    filename: 'C:/Ace Auction/database.db',
+    filename: path.join(__dirname, 'resources/exec_program/database.db'),
     driver: sqlite3.Database
   });
 
@@ -445,10 +409,29 @@ ipcMain.on('question1-update', async (event, question) => {
   }
 });
 
-// 9. AI 질문2 설정
+// 9. AI 질문1-추가질문 설정
+ipcMain.on('question1-plus-update', async (event, question) => {
+  const db = await sqlite.open({
+    filename: path.join(__dirname, 'resources/exec_program/database.db'),
+    driver: sqlite3.Database
+  });
+
+  try {
+    await db.run(`UPDATE t_settings SET question1_plus = ? WHERE id = 1`, question);
+    console.log('Question1 plus updated.');
+  } catch (err) {
+    console.error(err.message);
+  } finally {
+    await db.close();
+    console.log('database closed.');
+    event.sender.send('question1-plus-data', question);
+  }
+});
+
+// 10. AI 질문2 설정
 ipcMain.on('question2-update', async (event, question) => {
   const db = await sqlite.open({
-    filename: 'C:/Ace Auction/database.db',
+    filename: path.join(__dirname, 'resources/exec_program/database.db'),
     driver: sqlite3.Database
   });
 
@@ -468,20 +451,20 @@ ipcMain.on('question2-update', async (event, question) => {
 /** 프로그램 실행 관련 */
 ipcMain.on('run_session', async (event) => { // win -> run_session
 
-  const programPath = path.join('C:/Ace Auction/gui.exe'); //path.join(__dirname, 'gui/gui.exe');
+  const programPath = path.join(__dirname, 'resources/exec_program/gui.exe');
   const programDir = path.dirname(programPath);
 
   // execFile(path.join(__dirname, 'gui/gui.exe'), (error, stdout, stderr) => {
   execFile(programPath, { cwd: programDir }, (error, stdout, stderr) => {
-  if (error) {
+    if (error) {
       console.error(`Error executing file: ${error}`);
       return;
-  }
-  console.log(`stdout: ${stdout}`);
-  console.log(`stderr: ${stderr}`);
+    }
+    console.log(`stdout: ${stdout}`);
+    console.log(`stderr: ${stderr}`);
   });
 });
 
 const waitForTimeout = (ms) => {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
