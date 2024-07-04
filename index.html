@@ -266,11 +266,11 @@
         let con8 = document.getElementById('question1').value.trim();
         let con9 = document.getElementById('question2').value.trim();
 
-        if (con1 && con2 && con3 && con4 && con5 && con6 && con7 && con8 && con9) {
+        if (con1 && con2 && con3 && con4 && con5 && con6 && con7 && con9) {
           ipcRenderer.send('run_session'); // 메인 프로세스에 'run_session' 메시지 전송  
 
         } else {
-
+          alert('필수값이 설정되지 않았습니다.');
         }
 
       } catch (error) {
@@ -290,16 +290,6 @@
   </script>
 </body>
 <style lang="scss" scoped>
-  /* webview {
-        display:inline-flex;
-        width:640px;
-        height:480px;
-    }
-    webview.hide {
-        flex: 0 1;
-        width: 0px;
-        height: 0px;
-    } */
 
   body {
     font-family: 'Arial', sans-serif;

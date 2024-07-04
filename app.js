@@ -44,7 +44,7 @@ function createWindow() {
       contextIsolation: false,
       // webviewTag:true,
     },
-    icon: path.join(__dirname, 'resources/icon.png')
+    icon: path.join(process.resourcesPath, 'icon.png')
   });
 
   win.setMenu(null);
@@ -65,7 +65,7 @@ async function setupDatabase() { // 데이터베이스 설정
 
   // SQLite3 데이터베이스 연결
   const db = await sqlite.open({
-    filename: path.join(__dirname, 'resources/exec_program/database.db'),
+    filename: path.join(process.resourcesPath, 'exec_program', 'database.db'),
     driver: sqlite3.Database
   });
 
@@ -110,7 +110,7 @@ async function setupDatabase() { // 데이터베이스 설정
 
 async function getSettings() { // 설정값 불러오기
   const db = await sqlite.open({
-    filename: path.join(__dirname, 'resources/exec_program/database.db'),
+    filename: path.join(process.resourcesPath, 'exec_program', 'database.db'),
     driver: sqlite3.Database
   });
 
@@ -178,7 +178,7 @@ app.on('ready', () => {
   createWindow();
 
   /** 트레이 관련 */
-  tray = new Tray(path.join(__dirname, 'gui/icon.png')); // 아이콘 경로 설정
+  tray = new Tray(path.join(process.resourcesPath, 'icon.png')); // 아이콘 경로 설정
   const contextMenu = Menu.buildFromTemplate([
     {
       label: '열기', click: () => {
@@ -215,7 +215,7 @@ app.on('window-all-closed', () => {
 // 0. 발행/저장 여부 설정
 ipcMain.on('method', async (event, method) => {
   const db = await sqlite.open({
-    filename: path.join(__dirname, 'resources/exec_program/database.db'),
+    filename: path.join(process.resourcesPath, 'exec_program', 'database.db'),
     driver: sqlite3.Database
   });
 
@@ -246,14 +246,14 @@ ipcMain.on('open-dialog-start', (event) => {
   });
 });
 
-async function updateStartPath(path) {
+async function updateStartPath(p) {
   const db = await sqlite.open({
-    filename: path.join(__dirname, 'resources/exec_program/database.db'),
+    filename: path.join(process.resourcesPath, 'exec_program', 'database.db'),
     driver: sqlite3.Database
   });
 
   try {
-    await db.run(`UPDATE t_settings SET path_start = ? WHERE id = 1`, path);
+    await db.run(`UPDATE t_settings SET path_start = ? WHERE id = 1`, p);
     console.log('Directory path updated.');
   } catch (err) {
     console.error(err.message);
@@ -278,14 +278,14 @@ ipcMain.on('open-dialog-end', (event) => {
   });
 });
 
-async function updateEndPath(path) {
+async function updateEndPath(p) {
   const db = await sqlite.open({
-    filename: path.join(__dirname, 'resources/exec_program/database.db'),
+    filename: path.join(process.resourcesPath, 'exec_program', 'database.db'),
     driver: sqlite3.Database
   });
 
   try {
-    await db.run(`UPDATE t_settings SET path_end = ? WHERE id = 1`, path);
+    await db.run(`UPDATE t_settings SET path_end = ? WHERE id = 1`, p);
     console.log('Directory path updated.');
   } catch (err) {
     console.error(err.message);
@@ -298,7 +298,7 @@ async function updateEndPath(path) {
 // 3. 옥션 아이디 설정
 ipcMain.on('auction-id-update', async (event, auctionId) => {
   const db = await sqlite.open({
-    filename: path.join(__dirname, 'resources/exec_program/database.db'),
+    filename: path.join(process.resourcesPath, 'exec_program', 'database.db'),
     driver: sqlite3.Database
   });
 
@@ -317,7 +317,7 @@ ipcMain.on('auction-id-update', async (event, auctionId) => {
 // 4. 옥션 비밀번호 설정
 ipcMain.on('auction-pw-update', async (event, auctionPw) => {
   const db = await sqlite.open({
-    filename: path.join(__dirname, 'resources/exec_program/database.db'),
+    filename: path.join(process.resourcesPath, 'exec_program', 'database.db'),
     driver: sqlite3.Database
   });
 
@@ -336,7 +336,7 @@ ipcMain.on('auction-pw-update', async (event, auctionPw) => {
 // 5. 네이버 아이디 설정
 ipcMain.on('naver-id-update', async (event, naverId) => {
   const db = await sqlite.open({
-    filename: path.join(__dirname, 'resources/exec_program/database.db'),
+    filename: path.join(process.resourcesPath, 'exec_program', 'database.db'),
     driver: sqlite3.Database
   });
 
@@ -355,7 +355,7 @@ ipcMain.on('naver-id-update', async (event, naverId) => {
 // 6. 네이버 비밀번호 설정
 ipcMain.on('naver-pw-update', async (event, naverPw) => {
   const db = await sqlite.open({
-    filename: path.join(__dirname, 'resources/exec_program/database.db'),
+    filename: path.join(process.resourcesPath, 'exec_program', 'database.db'),
     driver: sqlite3.Database
   });
 
@@ -374,7 +374,7 @@ ipcMain.on('naver-pw-update', async (event, naverPw) => {
 // 7. API 설정
 ipcMain.on('api-key-update', async (event, apiKey) => {
   const db = await sqlite.open({
-    filename: path.join(__dirname, 'resources/exec_program/database.db'),
+    filename: path.join(process.resourcesPath, 'exec_program', 'database.db'),
     driver: sqlite3.Database
   });
 
@@ -393,7 +393,7 @@ ipcMain.on('api-key-update', async (event, apiKey) => {
 // 8. AI 질문1 설정
 ipcMain.on('question1-update', async (event, question) => {
   const db = await sqlite.open({
-    filename: path.join(__dirname, 'resources/exec_program/database.db'),
+    filename: path.join(process.resourcesPath, 'exec_program', 'database.db'),
     driver: sqlite3.Database
   });
 
@@ -412,7 +412,7 @@ ipcMain.on('question1-update', async (event, question) => {
 // 9. AI 질문1-추가질문 설정
 ipcMain.on('question1-plus-update', async (event, question) => {
   const db = await sqlite.open({
-    filename: path.join(__dirname, 'resources/exec_program/database.db'),
+    filename: path.join(process.resourcesPath, 'exec_program', 'database.db'),
     driver: sqlite3.Database
   });
 
@@ -431,7 +431,7 @@ ipcMain.on('question1-plus-update', async (event, question) => {
 // 10. AI 질문2 설정
 ipcMain.on('question2-update', async (event, question) => {
   const db = await sqlite.open({
-    filename: path.join(__dirname, 'resources/exec_program/database.db'),
+    filename: path.join(process.resourcesPath, 'exec_program', 'database.db'),
     driver: sqlite3.Database
   });
 
@@ -451,7 +451,7 @@ ipcMain.on('question2-update', async (event, question) => {
 /** 프로그램 실행 관련 */
 ipcMain.on('run_session', async (event) => { // win -> run_session
 
-  const programPath = path.join(__dirname, 'resources/exec_program/gui.exe');
+  const programPath = path.join(process.resourcesPath, 'exec_program', 'gui.exe');
   const programDir = path.dirname(programPath);
 
   // execFile(path.join(__dirname, 'gui/gui.exe'), (error, stdout, stderr) => {
